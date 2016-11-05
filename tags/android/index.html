@@ -86,7 +86,7 @@
 
 <meta property="og:type" content="website">
 <meta property="og:title" content="NEXTB">
-<meta property="og:url" content="http://yoursite.com/tags/Android/index.html">
+<meta property="og:url" content="http://yoursite.com/tags/android/index.html">
 <meta property="og:site_name" content="NEXTB">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="NEXTB">
@@ -110,10 +110,10 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/tags/Android/"/>
+  <link rel="canonical" href="http://yoursite.com/tags/android/"/>
 
 
-  <title> 标签: Android | NEXTB </title>
+  <title> 标签: android | NEXTB </title>
 </head>
 
 
@@ -190,14 +190,6 @@
           </a>
         </li>
       
-        
-        <li class="menu-item menu-item-schedule">
-          <a href="/schedule" rel="section">
-            
-            日程
-          </a>
-        </li>
-      
 
       
     </ul>
@@ -218,7 +210,7 @@
   <div id="posts" class="posts-collapse">
     <div class="collection-title">
       <h2 >
-        Android
+        android
         <small>标签</small>
       </h2>
     </div>
@@ -231,9 +223,9 @@
 
       <h1 class="post-title">
         
-            <a class="post-title-link" href="/2016/10/19/annotation/" itemprop="url">
+            <a class="post-title-link" href="/2016/10/18/当把EventBus比喻成苹果卖手机/" itemprop="url">
               
-                <span itemprop="name">Android编译时注解实践指南</span>
+                <span itemprop="name">当把EventBus比喻成苹果卖手机</span>
               
             </a>
         
@@ -241,9 +233,37 @@
 
       <div class="post-meta">
         <time class="post-time" itemprop="dateCreated"
-              datetime="2016-10-19T17:32:05+08:00"
-              content="2016-10-19" >
-          10-19
+              datetime="2016-10-18T09:45:50+08:00"
+              content="2016-10-18" >
+          10-18
+        </time>
+      </div>
+
+    </header>
+  </article>
+
+
+    
+      
+
+  <article class="post post-type-normal" itemscope itemtype="//schema.org/Article">
+    <header class="post-header">
+
+      <h1 class="post-title">
+        
+            <a class="post-title-link" href="/2016/10/17/First设计模式思维导图/" itemprop="url">
+              
+                <span itemprop="name">Head First设计模式思维导图</span>
+              
+            </a>
+        
+      </h1>
+
+      <div class="post-meta">
+        <time class="post-time" itemprop="dateCreated"
+              datetime="2016-10-17T20:39:15+08:00"
+              content="2016-10-17" >
+          10-17
         </time>
       </div>
 
@@ -285,7 +305,7 @@
       <section class="site-overview sidebar-panel  sidebar-panel-active ">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
           <img class="site-author-image" itemprop="image"
-               src="/images/avatar.gif"
+               src="/images/avatar.jpg"
                alt="NEXT" />
           <p class="site-author-name" itemprop="name">NEXT</p>
           <p class="site-description motion-element" itemprop="description"></p>
@@ -467,51 +487,115 @@
   
 
   
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("HOe9TkPiadv0Afw5jGl0gEuC-gzGzoHsz", "uPWanKlo8K6iWVB1KIajxCgk");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
 
-  
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
 
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
 
-</body>
-</html>
- 
-    
-  
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
 
-  <script type="text/javascript">
-    var duoshuoQuery = {short_name:"nextb"};
-    (function() {
-      var ds = document.createElement('script');
-      ds.type = 'text/javascript';ds.async = true;
-      ds.id = 'duoshuo-script';
-      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
-      ds.charset = 'UTF-8';
-      (document.getElementsByTagName('head')[0]
-      || document.getElementsByTagName('body')[0]).appendChild(ds);
-    })();
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
   </script>
 
-  
-    
-    <script src="/lib/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
-    <script src="/js/src/hook-duoshuo.js"></script>
-  
 
-
-
-
-
-
-  
-  
 
   
 
   
-
-  
-
-  
-
 
 </body>
 </html>
