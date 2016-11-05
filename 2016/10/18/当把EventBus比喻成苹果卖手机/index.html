@@ -68,7 +68,7 @@
 <link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="Hexo, NexT" />
+  <meta name="keywords" content="android,EventBus,订阅者模式,单例模式，门面模式," />
 
 
 
@@ -84,12 +84,24 @@
 
 
 
-<meta property="og:type" content="website">
-<meta property="og:title" content="NEXTB">
-<meta property="og:url" content="http://yoursite.com/index.html">
+<meta name="description" content="概况EventBus一直都知道这个库，但是没有接触，看到国内 Top500 Android 应用分析报告使用情况，觉得有必要掌握此库。EventBus是android的一个用于消息传递的库，属于订阅者模式，让发布者和订阅者解耦。本文通过对EventBus的使用，分析其内部实现。
+简单使用关于EventBus的使用不是本文的重点，EventBus的使用请查看EventBus使用详解。
+做个比喻为了更">
+<meta property="og:type" content="article">
+<meta property="og:title" content="当把EventBus比喻成苹果卖手机">
+<meta property="og:url" content="http://yoursite.com/2016/10/18/当把EventBus比喻成苹果卖手机/index.html">
 <meta property="og:site_name" content="NEXTB">
+<meta property="og:description" content="概况EventBus一直都知道这个库，但是没有接触，看到国内 Top500 Android 应用分析报告使用情况，觉得有必要掌握此库。EventBus是android的一个用于消息传递的库，属于订阅者模式，让发布者和订阅者解耦。本文通过对EventBus的使用，分析其内部实现。
+简单使用关于EventBus的使用不是本文的重点，EventBus的使用请查看EventBus使用详解。
+做个比喻为了更">
+<meta property="og:image" content="http://yoursite.com/images/eventbus_iphone.png">
+<meta property="og:updated_time" content="2016-11-04T08:14:02.265Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="NEXTB">
+<meta name="twitter:title" content="当把EventBus比喻成苹果卖手机">
+<meta name="twitter:description" content="概况EventBus一直都知道这个库，但是没有接触，看到国内 Top500 Android 应用分析报告使用情况，觉得有必要掌握此库。EventBus是android的一个用于消息传递的库，属于订阅者模式，让发布者和订阅者解耦。本文通过对EventBus的使用，分析其内部实现。
+简单使用关于EventBus的使用不是本文的重点，EventBus的使用请查看EventBus使用详解。
+做个比喻为了更">
+<meta name="twitter:image" content="http://yoursite.com/images/eventbus_iphone.png">
 
 
 
@@ -110,10 +122,10 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/"/>
+  <link rel="canonical" href="http://yoursite.com/2016/10/18/当把EventBus比喻成苹果卖手机/"/>
 
 
-  <title> NEXTB </title>
+  <title> 当把EventBus比喻成苹果卖手机 | NEXTB </title>
 </head>
 
 <body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
@@ -134,9 +146,7 @@
     
   
 
-  <div class="container one-collumn sidebar-position-left 
-   page-home 
- ">
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
@@ -215,9 +225,9 @@
         <div class="content-wrap">
           <div id="content" class="content">
             
-  <section id="posts" class="posts-expand">
+
+  <div id="posts" class="posts-expand">
     
-      
 
   
   
@@ -237,125 +247,7 @@
             
             
               
-                
-                <a class="post-title-link" href="/2016/10/19/annotation/" itemprop="url">
-                  Android编译时注解实践指南
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-10-19T17:32:05+08:00" content="2016-10-19">
-              2016-10-19
-            </time>
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2016/10/19/annotation/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/10/19/annotation/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>Android注解分为两种，一种是运行时注解，一种是编译时注解。RxJava就是运行时注解，而butterKnife和EventBus是编译时注解，啃代码的时候经常碰到注解，所以只能乖乖的学习。本文主要讲解演示如何在Android Studio上运行一个编译时注解的Demo，被注解的对象打印出该对象的信息。</p>
-<h2 id="1-新建一个Java-Library项目"><a href="#1-新建一个Java-Library项目" class="headerlink" title="1.新建一个Java Library项目"></a>1.新建一个Java Library项目</h2><p>在Android Studio中先新建一个Android project。在Android project 中选中File-&gt;New-&gt;New Module…选择<strong>Java Library</strong>新建一个module。因为注解中用到Java库，所以必须要导入Java Library.<br><img src="/images/process_new_module.png" alt="新建Java Library"><br><img src="/images/process_java_library.png" alt="new Module..."></p>
-<p>新建的Android项目名叫At(Annotation),Java Library名字是at2.<br><img src="/images/process_projcet_struct.png" alt="new Module..."></p>
-<h2 id="2-编写注解类"><a href="#2-编写注解类" class="headerlink" title="2.编写注解类"></a>2.编写注解类</h2><p>在at2项目中，新建一个PrintInject，加入以下代码声明一个注解类，注解类的类型是@interface<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line"> * Author      :  yuanjunli</div><div class="line"> * Create Time :  2016/10/19 13:50</div><div class="line"> * Email       : 878715255@qq.com</div><div class="line"> */</div><div class="line"><span class="meta">@Target</span>(&#123;ElementType.TYPE, ElementType.FIELD, ElementType.METHOD&#125;)  <span class="comment">//声明此类可以注解的对象</span></div><div class="line"><span class="meta">@Retention</span>(RetentionPolicy.CLASS)                                   <span class="comment">//编译时运行</span></div><div class="line"><span class="keyword">public</span> <span class="meta">@interface</span> PrintInject &#123;                                     <span class="comment">//@interface声明</span></div><div class="line">        <span class="function"><span class="keyword">int</span> <span class="title">value</span><span class="params">()</span></span>;                                                <span class="comment">//定义有一个int参数</span></div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>@Target(ElementType.TYPE)   //接口、类、枚举、注解<br>@Target(ElementType.FIELD) //字段、枚举的常量<br>@Target(ElementType.METHOD) //方法</p>
-<h2 id="3-注册声明方法"><a href="#3-注册声明方法" class="headerlink" title="3.注册声明方法"></a>3.注册声明方法</h2><p>在他项目中，新建一个PrintInjectProcessor，键入以下代码：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@SupportedAnnotationTypes</span>(<span class="string">"com.example.PrintInject"</span>)</div><div class="line"><span class="meta">@SupportedSourceVersion</span>(SourceVersion.RELEASE_7)</div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">PrintInjectProcessor</span> <span class="keyword">extends</span> <span class="title">AbstractProcessor</span> </span>&#123;</div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">process</span><span class="params">(Set&lt;? extends TypeElement&gt; annotations, RoundEnvironment roundEnv)</span> </span>&#123;</div><div class="line">        Messager messager = processingEnv.getMessager();</div><div class="line">        <span class="keyword">for</span> (TypeElement te : annotations) &#123;</div><div class="line">            <span class="keyword">for</span> (Element e : roundEnv.getElementsAnnotatedWith(te)) &#123;</div><div class="line">                messager.printMessage(Diagnostic.Kind.NOTE, <span class="string">"Printing: "</span> + e.toString());</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>@SupportedAnnotationTypes：指定该注解起作用的类；<br>@SupportedSourceVersion(SourceVersion.RELEASE_7)：指定jdk的版本；<br>AbstractProcessor：自定义的声明需要继承AbstractProcessor，重点实现process方法；<br>processingEnv：注解框架提供的工具集合，在此demo中取到message对象打印信息。打印的信息在android studio中<strong>Gradle Console</strong>切页中显示；<br>TypeElement：是注解的类型；<br>以上的代码就是获取所有自定义的注解并且通过<code>e.toString()</code>打印注解类的信息。</p>
-<h2 id="4-创建路径文件"><a href="#4-创建路径文件" class="headerlink" title="4.创建路径文件"></a>4.创建路径文件</h2><p>在resources路径文件夹下创建一个META-INF文件夹，META-INF下面创建一个services文件夹，在里边创建一个javax.annotation.processing.Processor文件，此文件路径不能出错。在文件中写入注解路径的声明，本项目路径是<code>com.example.PrintInjectProcessor</code><br><img src="/images/process_resources_struct.png" alt="new Module..."><br>如图检查Processor放置的路径是否一样。</p>
-<h2 id="5-生成编译注解at2的jar包"><a href="#5-生成编译注解at2的jar包" class="headerlink" title="5.生成编译注解at2的jar包"></a>5.生成编译注解at2的jar包</h2><p>经过以上操作，编写了一个<code>@PrintInject</code>的声明，当对象被@PrintInject声明时，在项目编译时就会打印对象的信息。接下来单独编译运行at2 这个module，导出该jar包。<br><img src="/images/process_jar.png" alt="new Module..."><br>在android studio 右侧打开Gradle切页，如果没有显示项目的gradle，点击gradle按钮编译一下，如上图，打开:at2-&gt;Tasks -&gt;build 双击里边的build文件。编译成功后会如下图所示在项目build-&gt;libs目录下生成一个at2.jar.<br><img src="/images/process_libs.png" alt="new Module..."></p>
-<h2 id="6-demo测试"><a href="#6-demo测试" class="headerlink" title="6.demo测试"></a>6.demo测试</h2><p>将at2.jar copy 到at主项目的libs文件夹下，生成android项目时在app/build.gradle文件下有<code>compile fileTree(dir: &#39;libs&#39;, include: [&#39;*.jar&#39;])</code>为自动导入jar。编写MainActivity代码如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MainActivity</span> <span class="keyword">extends</span> <span class="title">AppCompatActivity</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="meta">@PrintInject</span>(<span class="number">1</span>)</div><div class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</div><div class="line">        <span class="keyword">super</span>.onCreate(savedInstanceState);</div><div class="line">        setContentView(R.layout.activity_main);</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p><code>@PrintInject(1)</code>在方法onCreate()上添加注解，int参数为1。接着看编译运行demo后，message的输出并不在Message切页，也不知Log里边，是在<strong>Gradle Console</strong>下。需要注意，第一次运行项目的时候会有message输出，当再次运行时并没有，因为第二次无须再次编译，如果需要再次看到输出的信息，可以Build-&gt;Clean Project。<br><img src="/images/process_console.png" alt="new Module..."></p>
-<h2 id="7-总结"><a href="#7-总结" class="headerlink" title="7.总结"></a>7.总结</h2><p>以上就是编译注解demo的全部内容，并不涉及注解的深入使用，只在于跑通注解的流程。</p>
-<h2 id="8-引用"><a href="#8-引用" class="headerlink" title="8.引用"></a>8.引用</h2><blockquote>
-<p><a href="http://blog.csdn.net/lmj623565791/article/details/43452969" target="_blank" rel="external">Android 打造编译时注解解析框架 这只是一个开始</a><br><a href="http://www.jianshu.com/p/252b0c16ffaa" target="_blank" rel="external">如何实现自定义Java编译时注解功能–初步印象</a></p>
-</blockquote>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/10/18/当把EventBus比喻成苹果卖手机/" itemprop="url">
-                  当把EventBus比喻成苹果卖手机
-                </a>
+                当把EventBus比喻成苹果卖手机
               
             
           </h1>
@@ -402,9 +294,7 @@
       
 
       
-        
-          
-            <h1 id="概况"><a href="#概况" class="headerlink" title="概况"></a>概况</h1><p>EventBus一直都知道这个库，但是没有接触，看到<a href="http://gold.xitu.io/entry/5783410fa633bd005b24e079" target="_blank" rel="external">国内 Top500 Android 应用分析报告</a>使用情况，觉得有必要掌握此库。EventBus是android的一个用于消息传递的库，属于订阅者模式，让发布者和订阅者解耦。本文通过对EventBus的使用，分析其内部实现。</p>
+        <h1 id="概况"><a href="#概况" class="headerlink" title="概况"></a>概况</h1><p>EventBus一直都知道这个库，但是没有接触，看到<a href="http://gold.xitu.io/entry/5783410fa633bd005b24e079" target="_blank" rel="external">国内 Top500 Android 应用分析报告</a>使用情况，觉得有必要掌握此库。EventBus是android的一个用于消息传递的库，属于订阅者模式，让发布者和订阅者解耦。本文通过对EventBus的使用，分析其内部实现。</p>
 <h1 id="简单使用"><a href="#简单使用" class="headerlink" title="简单使用"></a>简单使用</h1><p>关于EventBus的使用不是本文的重点，EventBus的使用请查看<a href="http://www.jianshu.com/p/da9e193e8b03" target="_blank" rel="external">EventBus使用详解</a>。</p>
 <h1 id="做个比喻"><a href="#做个比喻" class="headerlink" title="做个比喻"></a>做个比喻</h1><p>为了更好的理解EventBus这个库的流程，以下将根据下图做一个比喻。<br><img src="/images/eventbus_iphone.png" alt="new Module..."><br>如上图，EventBus充当苹果公司销售部的角色。当苹果公司(Publisher发布者)生产(调用post方法)出某一款手机(EventType)时，消息会传递到销售部，由销售部告诉用户（Subscriber订阅者）。例如用户想购买iphone8，该用户必须要预约(方法被@Subscriber注解)，当销售部接到公司说iphone8开始售卖了，那么只有预约手机的用户可以购买(订阅方法被调用)。</p>
 <h1 id="阅读源码"><a href="#阅读源码" class="headerlink" title="阅读源码"></a>阅读源码</h1><h2 id="EventBus-getDefault-register-this"><a href="#EventBus-getDefault-register-this" class="headerlink" title="EventBus.getDefault().register(this);"></a>EventBus.getDefault().register(this);</h2><pre><code class="java"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> EventBus <span class="title">getDefault</span><span class="params">()</span> </span>{
@@ -652,138 +542,69 @@
 <p><a href="http://p.codekk.com/blogs/detail/54cfab086c4761e5001b2538" target="_blank" rel="external">EventBus 源码解析</a><br><a href="http://skykai521.github.io/2016/02/20/EventBus-3-0%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" target="_blank" rel="external">EventBus 3.0 源代码分析</a></p>
 </blockquote>
 
-          
+      
+    </div>
+
+    <div>
+      
         
+
       
     </div>
 
     <div>
       
-    </div>
+        
 
-    <div>
       
     </div>
 
     <footer class="post-footer">
       
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/10/17/First设计模式思维导图/" itemprop="url">
-                  Head First设计模式思维导图
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-10-17T20:39:15+08:00" content="2016-10-17">
-              2016-10-17
-            </time>
-          </span>
-
+        <div class="post-tags">
           
-
+            <a href="/tags/android/" rel="tag">#android</a>
           
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2016/10/17/First设计模式思维导图/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/10/17/First设计模式思维导图/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
+            <a href="/tags/EventBus/" rel="tag">#EventBus</a>
           
-
+            <a href="/tags/订阅者模式/" rel="tag">#订阅者模式</a>
           
-
-          
-          
-
+            <a href="/tags/单例模式，门面模式/" rel="tag">#单例模式，门面模式</a>
           
         </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
       
 
       
-        
-          
-            <p>这么多设计模式，看书经常看完后面的就把前面的忘记了。所以在读Head First时，特意边读边做笔记，用思维导图有利于描述设计模式之间的区别和联系。图不是很清晰，可以打开<a href="https://www.processon.com/view/link/57fdf69ae4b08d4fe9b94413" target="_blank" rel="external">Head First设计模式思维导图</a>查看大图。</p>
-<p><img src="/images/design.png" alt="Head First设计模式思维导图"></p>
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/10/17/First设计模式思维导图/" rel="next" title="Head First设计模式思维导图">
+                <i class="fa fa-chevron-left"></i> Head First设计模式思维导图
+              </a>
+            
+          </div>
 
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/10/19/annotation/" rel="prev" title="Android编译时注解实践指南">
+                Android编译时注解实践指南 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
       
 
       
-
-      
-      
-        <div class="post-eof"></div>
       
     </footer>
   </article>
 
 
-    
-  </section>
 
-  
+    <div class="post-spread">
+      
+    </div>
+  </div>
 
 
           </div>
@@ -791,6 +612,14 @@
 
 
           
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/10/18/当把EventBus比喻成苹果卖手机/"
+           data-title="当把EventBus比喻成苹果卖手机" data-url="http://yoursite.com/2016/10/18/当把EventBus比喻成苹果卖手机/">
+      </div>
+    
+  </div>
+
 
         </div>
         
@@ -810,8 +639,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview sidebar-panel  sidebar-panel-active ">
+      <section class="site-overview sidebar-panel ">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
           <img class="site-author-image" itemprop="image"
                src="/images/avatar.gif"
@@ -854,6 +692,17 @@
 
       </section>
 
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#概况"><span class="nav-number">1.</span> <span class="nav-text">概况</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#简单使用"><span class="nav-number">2.</span> <span class="nav-text">简单使用</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#做个比喻"><span class="nav-number">3.</span> <span class="nav-text">做个比喻</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#阅读源码"><span class="nav-number">4.</span> <span class="nav-text">阅读源码</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#EventBus-getDefault-register-this"><span class="nav-number">4.1.</span> <span class="nav-text">EventBus.getDefault().register(this);</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#register-Object-subscriber"><span class="nav-number">4.1.1.</span> <span class="nav-text">register(Object subscriber)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#subscribe-subscriber-subscriberMethod"><span class="nav-number">4.1.2.</span> <span class="nav-text">subscribe(subscriber, subscriberMethod);</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#checkPostStickyEventToSubscription-newSubscription-stickyEvent"><span class="nav-number">4.1.3.</span> <span class="nav-text">checkPostStickyEventToSubscription(newSubscription, stickyEvent);</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#跳转postToSubscription方法"><span class="nav-number">4.1.4.</span> <span class="nav-text">跳转postToSubscription方法;</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#invokeSubscriber-subscription-event"><span class="nav-number">4.1.5.</span> <span class="nav-text">invokeSubscriber(subscription, event)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#EventBus-getDefault-register-this-小结"><span class="nav-number">4.1.6.</span> <span class="nav-text">EventBus.getDefault().register(this)小结</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#EventBus-getDefault-post-EventType"><span class="nav-number">4.2.</span> <span class="nav-text">EventBus.getDefault().post(EventType);</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#post-和postSticky-的区别"><span class="nav-number">4.2.1.</span> <span class="nav-text">post()和postSticky()的区别</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#post-EventType"><span class="nav-number">4.2.2.</span> <span class="nav-text">post(EventType);</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#postSingleEvent-eventQueue-remove-0-postingState"><span class="nav-number">4.2.3.</span> <span class="nav-text">postSingleEvent(eventQueue.remove(0), postingState);</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#postSingleEventForEventType"><span class="nav-number">4.2.4.</span> <span class="nav-text">postSingleEventForEventType()</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#post-方法小结"><span class="nav-number">4.2.5.</span> <span class="nav-text">post()方法小结</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">4.3.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#引用"><span class="nav-number">4.4.</span> <span class="nav-text">引用</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
       
 
     </div>
@@ -950,6 +799,10 @@
   
 
   
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
+
 
   
 
