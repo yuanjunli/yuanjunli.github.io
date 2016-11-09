@@ -231,6 +231,317 @@
             
               
                 
+                <a class="post-title-link" href="/2016/11/09/factory/" itemprop="url">
+                  factory
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-11-09T09:53:29+08:00" content="2016-11-09">
+              2016-11-09
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/11/09/factory/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/11/09/factory/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/11/09/factory/" class="leancloud_visitors" data-flag-title="factory">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h1><p>工厂模式，简单的理解，就是封装通过new方式创建对象的代码。工厂模式可分为三类：</p>
+<blockquote>
+<p>简单工厂（Simple Factory）<br>工厂方法（Factory Method）<br>抽象工厂（Abstract Factory）</p>
+</blockquote>
+<p>本文的目的，就是通过举例理解区分三种工厂模式。</p>
+<h1 id="没有工厂模式"><a href="#没有工厂模式" class="headerlink" title="没有工厂模式"></a>没有工厂模式</h1><h2 id="场景"><a href="#场景" class="headerlink" title="场景"></a>场景</h2><p>如果用户要购买Iphone手机，在没有工厂模式的情况下，用户只能自己根据手机型号来创建手机，客户代码如下：</p>
+<pre><code class="java"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Customer</span> </span>{
+
+    <span class="function"><span class="keyword">public</span> Iphone <span class="title">getIphone</span><span class="params">(String type)</span> </span>{
+         <span class="keyword">switch</span> (type) {
+            <span class="keyword">case</span> <span class="string">"iphone5"</span>:
+                <span class="keyword">return</span> <span class="keyword">new</span> Iphone5();
+            <span class="keyword">case</span> <span class="string">"iphone6"</span>:
+                <span class="keyword">return</span> <span class="keyword">new</span> Iphone6();
+        }
+        <span class="keyword">return</span> <span class="keyword">null</span>;
+    }
+}
+</code></pre>
+<h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><p>当现在需要把ipone5下架，推出iphone6时，Customer代码如下：</p>
+<pre><code class="java"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Customer</span> </span>{
+
+    <span class="function"><span class="keyword">public</span> Iphone <span class="title">getIphone</span><span class="params">(String type)</span> </span>{
+         <span class="keyword">switch</span> (type) {
+            <span class="keyword">case</span> <span class="string">"iphone6"</span>:
+                <span class="keyword">return</span> <span class="keyword">new</span> Iphone6();
+             <span class="keyword">case</span> <span class="string">"iphone7"</span>:
+                 <span class="keyword">return</span> <span class="keyword">new</span> Iphone7();
+        }
+        <span class="keyword">return</span> <span class="keyword">null</span>;
+    }
+}
+</code></pre>
+<p>简单的修改Customer端的代码，就能满足新的需求，但是，这违背了一个原则：</p>
+<blockquote>
+<p>设计应该”对扩展开发，对修改关闭”</p>
+</blockquote>
+<p>每次有新的型号，都需要改变Customer的代码，这明显是不合理，于是该普通工厂模式出现了。</p>
+<h1 id="普通工厂"><a href="#普通工厂" class="headerlink" title="普通工厂"></a>普通工厂</h1><p>把创建手机变化的部分封装到一个新的类SimpleIphoneFactory，Customer代码如下：</p>
+<pre><code class="java"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Customer</span> </span>{
+
+    <span class="function"><span class="keyword">public</span> Iphone <span class="title">getIphone</span><span class="params">(String type)</span> </span>{
+        SimpleIphoneFactory simpleIphoneFactory = <span class="keyword">new</span> SimpleIphoneFactory();
+        <span class="keyword">return</span>  simpleIphoneFactory.creatIphone(type);
+    }
+}
+</code></pre>
+<p>SimpleIphoneFactory的代码如下：</p>
+<pre><code class="java"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SimpleIphoneFactory</span> </span>{
+
+    <span class="function"><span class="keyword">public</span> Iphone <span class="title">creatIphone</span><span class="params">(String type)</span> </span>{
+        <span class="keyword">switch</span> (type){
+            <span class="keyword">case</span> <span class="string">"iphone6"</span>:
+                <span class="keyword">return</span> <span class="keyword">new</span> Iphone6();
+            <span class="keyword">case</span> <span class="string">"iphone7"</span>:
+                <span class="keyword">return</span> <span class="keyword">new</span> Iphone7();
+        }
+        <span class="keyword">return</span> <span class="keyword">null</span>;
+    }
+}
+</code></pre>
+<p>改变后，感觉代码并没有太大的变化。当iphone6下架，iphone8上架，还是得改变SimpleIphoneFactory的代码。<br>但是，此时Customer的代码无须改动，<strong>简单工厂方法的目的，就是把具体实例化的代码，从客户端删除</strong>。</p>
+<h2 id="问题-1"><a href="#问题-1" class="headerlink" title="问题"></a>问题</h2><p>当Iphone的型号越来越多时，SimpleIphoneFactory的代码依然需要改变，Customer类符合开闭原则，SimpleIphoneFactory不符合开闭原则。下面，我们采用工厂方法，把获取手机的方法getIphone()移回Customer，解决SimpleIponeFactory依赖过多Iphone实体对象的问题。</p>
+<h1 id="工厂方法"><a href="#工厂方法" class="headerlink" title="工厂方法"></a>工厂方法</h1><p>把用户变成抽象类，他的子类决定实例化什么类型的手机：</p>
+<pre><code class="java"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">Customer</span> </span>{
+    <span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> Iphone <span class="title">getIphone</span><span class="params">()</span></span>;
+}
+</code></pre>
+<p>Iphone5消费者：</p>
+<pre><code class="java"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Iphone5Customer</span> <span class="keyword">extends</span> <span class="title">Customer</span></span>{
+
+    <span class="meta">@Override</span>
+    <span class="function"><span class="keyword">public</span> Iphone <span class="title">getIphone</span><span class="params">()</span> </span>{
+        <span class="keyword">return</span> <span class="keyword">new</span> Iphone5();
+    }
+}
+</code></pre>
+<p>Iphone6消费者：</p>
+<pre><code class="java"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Iphone6Customer</span> <span class="keyword">extends</span> <span class="title">Customer</span></span>{
+
+    <span class="meta">@Override</span>
+    <span class="function"><span class="keyword">public</span> Iphone <span class="title">getIphone</span><span class="params">()</span> </span>{
+        <span class="keyword">return</span> <span class="keyword">new</span> Iphone6();
+    }e
+}
+</code></pre>
+<p>下面来看不同用户获取手机的代码：</p>
+<pre><code class="java"><span class="comment">//购买5的用户</span>
+Customer iphone5Customer = <span class="keyword">new</span> Iphone5Customer();
+iphone5Customer.getIphone();
+<span class="comment">//购买6的用户</span>
+Customer iphone6Customer = <span class="keyword">new</span> Iphone6Customer();
+iphone5Customer.getIphone();
+</code></pre>
+<h2 id="问题-2"><a href="#问题-2" class="headerlink" title="问题"></a>问题</h2><p>用户获取手机，是为了使用，我们给手机添加一个startUp()方法启动手机：</p>
+<pre><code class="java"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">Iphone</span> </span>{
+    <span class="comment">/**
+     * 电池毫安数
+     */</span>
+    <span class="keyword">protected</span> <span class="keyword">int</span> power;
+    <span class="comment">/**
+     * 电池
+     */</span>
+    <span class="keyword">protected</span> Battery battery;
+
+    <span class="comment">/**
+     * 设置电池
+     * <span class="doctag">@param</span> battery
+     */</span>
+    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setBattery</span><span class="params">(Battery battery)</span></span>{
+        <span class="keyword">this</span>.battery = battery;
+    };
+
+    <span class="comment">/**
+     * 开机
+     */</span>
+    <span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">void</span> <span class="title">startUp</span><span class="params">()</span></span>;
+}
+</code></pre>
+<p>Iphone抽象类提供一个开机的抽象方法，由子类实现。我们开看Iphone5的实体类：</p>
+<pre><code class="java"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Iphone5</span> <span class="keyword">extends</span> <span class="title">Iphone</span></span>{
+    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String TAG = <span class="string">"Iphone5"</span>;
+
+    <span class="meta">@Override</span>
+    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">startUp</span><span class="params">()</span> </span>{
+        <span class="keyword">if</span>(battery.power() == <span class="number">5000</span>){
+            Log.d(TAG,<span class="string">"startUp success"</span>);
+        }<span class="keyword">else</span>{
+            Log.d(TAG,<span class="string">"Boom!!!!"</span>);
+        }
+    }
+}
+</code></pre>
+<p>可以看到Iphone5实体类，当调用startUp方法时，需要判断电池的毫安数，当等于5000时，成功启动；否则会爆炸。Iphone依赖Battery,下面来看Battery抽象类：</p>
+<pre><code class="java"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">Battery</span> </span>{
+    <span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">int</span> <span class="title">power</span><span class="params">()</span></span>;
+}
+</code></pre>
+<p>抽象类定义了一个抽象power()方法，调用此方法返回电池的毫安数。来看Iphone5Battery和Iphone6Battery的类：</p>
+<pre><code class="java"><span class="keyword">public</span>  <span class="class"><span class="keyword">class</span> <span class="title">Iphone5Battery</span> <span class="keyword">extends</span> <span class="title">Battery</span></span>{
+    <span class="meta">@Override</span>
+    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">power</span><span class="params">()</span> </span>{
+        <span class="keyword">return</span> <span class="number">5000</span>;
+    }
+}
+
+<span class="keyword">public</span>  <span class="class"><span class="keyword">class</span> <span class="title">Iphone6Battery</span> <span class="keyword">extends</span> <span class="title">Battery</span></span>{
+    <span class="meta">@Override</span>
+    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">power</span><span class="params">()</span> </span>{
+        <span class="keyword">return</span> <span class="number">10000</span>;
+    }
+}
+</code></pre>
+<p>假设，用户把iphone5的手机配上iphone6的电池(假设电池外形一样，只是毫安数不一样)，代码如下：</p>
+<pre><code class="java">Customer iphone5Customer = <span class="keyword">new</span> Iphone5Customer();
+Iphone iphone5 = iphone5Customer.getIphone();
+iphone5.setBattery(<span class="keyword">new</span> Iphone6Battery());
+iphone5.startUp();
+</code></pre>
+<p>毫无疑问，这会发生爆炸。<code>Log.d(TAG,&quot;Boom!!!!&quot;)</code>。为了防止爆炸，生产手机时，必须要配套生产同类型的电池。<strong>当需要约束产品类之间的关系时</strong>，抽象工厂出场了。</p>
+<h1 id="抽象工厂"><a href="#抽象工厂" class="headerlink" title="抽象工厂"></a>抽象工厂</h1><p>Iphone稳定的产能，需要各个代工厂的生产，苹果公司制定了一套生产手机的框架来保证手机的质量，例如Iphone6的手机只能使用Iphone6的电池。苹果公司可不想像三星手机那样<strong>因电池原因</strong>发生爆炸事件。<br>我们修改Customer类如下：</p>
+<pre><code class="java"><span class="keyword">public</span>  <span class="class"><span class="keyword">class</span> <span class="title">Customer</span> </span>{
+<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">startUp</span><span class="params">(IphoneFactory iphoneFactory)</span></span>{
+        iphoneFactory.startUp();
+    }
+}
+</code></pre>
+<p>Customer类提供了一个启动手机的方法，传入一个IphoneFactory对象，由IphoneFactory创建手机和对应的电池，防止因电池型号不对导致的爆炸意外。<br>IphoneFactory类如下：</p>
+<pre><code class="java"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">IphoneFactory</span> </span>{
+    <span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> Iphone <span class="title">creatIphone</span><span class="params">()</span></span>;
+    <span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> Battery <span class="title">creatBattery</span><span class="params">()</span></span>;
+    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">startUp</span><span class="params">()</span></span>{
+         Iphone iphone = createIphone();
+         Battery battery = createBattery();
+         iphone.setBattery(battery);
+         iphone.startUp();
+    }
+}
+</code></pre>
+<p>IphoneFactory是一个抽象类，startUp方法确定了Iphone和Battery的关系，子类实现创建Iphone和Battery的方法。看Iphone5Factory的类：</p>
+<pre><code class="java"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Iphone5Factory</span> <span class="keyword">extends</span> <span class="title">IphoneFactory</span> </span>{
+
+    <span class="meta">@Override</span>
+    <span class="function"><span class="keyword">public</span> Iphone <span class="title">creatIphone</span><span class="params">()</span> </span>{
+        <span class="keyword">return</span> <span class="keyword">new</span> Iphone5();
+    }
+    <span class="meta">@Override</span>
+    <span class="function"><span class="keyword">public</span> Battery <span class="title">creatBattery</span><span class="params">()</span> </span>{
+        <span class="keyword">return</span> <span class="keyword">new</span> Iphone4Battery();
+    }
+}
+</code></pre>
+<p>最后我们来看启动Iphone5手机的代码：</p>
+<pre><code class="java">IphoneFactory iphone5Factory = <span class="keyword">new</span> Iphone5Factory();
+Customer customer = <span class="keyword">new</span> Customer();
+customer.startUp(iphone5Factory);
+</code></pre>
+<p>可以看到，iphone5手机成功启动的Log。因为IphoneFactory封装了startUp的方法，明确了Iphone和Battery的关系，用户不能自主组装Iphone和Battery，防止了因装错电池导致事故的发生。</p>
+<h1 id="类图"><a href="#类图" class="headerlink" title="类图"></a>类图</h1><h2 id="简单工厂"><a href="#简单工厂" class="headerlink" title="简单工厂"></a>简单工厂</h2><p><img src="/images/factory_simple.png" alt="简单工厂"></p>
+<h2 id="工厂方法-1"><a href="#工厂方法-1" class="headerlink" title="工厂方法"></a>工厂方法</h2><p><img src="/images/factory_method.png" alt="工厂方法"></p>
+<h2 id="抽象工厂-1"><a href="#抽象工厂-1" class="headerlink" title="抽象工厂"></a>抽象工厂</h2><p><img src="/images/factory_abstract.png" alt="抽象工厂"></p>
+<h1 id="一句话小结"><a href="#一句话小结" class="headerlink" title="一句话小结"></a>一句话小结</h1><p>简单工厂：将创建代码从客户端移至工厂类。<br>工厂方法：用继承的方式实现，一种产品对应一个工厂类。<br>抽象工厂：系统存在产品族，且产品之间存在关系。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2016/10/19/annotation/" itemprop="url">
                   Android编译时注解实践指南
                 </a>
@@ -842,7 +1153,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">3</span>
+              <span class="site-state-item-count">4</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -852,7 +1163,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-count">10</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
