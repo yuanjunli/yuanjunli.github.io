@@ -231,6 +231,759 @@
             
               
                 
+                <a class="post-title-link" href="/2016/11/26/rxjava+retrofit+OkHttp封装/" itemprop="url">
+                  RxJava+Retrofit+OkHttp封装
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-11-26T13:22:07+08:00" content="2016-11-26">
+              2016-11-26
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/11/26/rxjava+retrofit+OkHttp封装/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/11/26/rxjava+retrofit+OkHttp封装/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/11/26/rxjava+retrofit+OkHttp封装/" class="leancloud_visitors" data-flag-title="RxJava+Retrofit+OkHttp封装">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>原文链接：<a href="yuanjunli.github.io/2016/11/26/rxjava+retrofit+OkHttp封装">rxjava+retrofit+OkHttp封装</a></p>
+<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>本文假设读者对RxJava、Retrofit和OkHttp具有基本的了解，以项目为例，重点讲解如何优雅的封装一个网络请求框架，以适应实际项目中的使用需求。</p>
+<h1 id="要解决的问题"><a href="#要解决的问题" class="headerlink" title="要解决的问题"></a>要解决的问题</h1><ol>
+<li>支持切换网络请求地址，例如项目有分区功能，不同的分区对应不同的服务器地址</li>
+<li>服务器返回接口格式不一致，有的接口是返回json格式,有的返回String格式</li>
+<li>url地址中，包含固定的参数，例如版本号，渠道信息等，怎么统一添加</li>
+<li>url地址中，包含动态地参数，如何动态添加</li>
+<li>是否添加网络请求的Log</li>
+<li>是否添加header(sessionId)</li>
+<li>网络请求可配置是否显示网络加载动画</li>
+<li>封装Observalbe进行数据处理的步骤，可动态改变数据处理的过程</li>
+<li>封装错误处理，区分网络错误和应用层响应错误。 </li>
+</ol>
+<h1 id="优雅封装"><a href="#优雅封装" class="headerlink" title="优雅封装"></a>优雅封装</h1><h2 id="相互联系"><a href="#相互联系" class="headerlink" title="相互联系"></a>相互联系</h2><p>在三者的关系中，Retrofit主要负责将网络请求接口化，真正的网络请求和响应交给OkHttp，而RxJava在网络框架中扮演数据响应后进行数据处理的角色。做个简单比喻：假设用户需要从上海飞往北京中关村办事，需要办理登机、做飞机、到达北京后前往中关村。登机手续由Retrofit负责，真正的运输是由飞机(Okhttp)完成，客户到达（数据返回）选择交通工具（RtHttp）到达中关村。</p>
+<h2 id="设计图"><a href="#设计图" class="headerlink" title="设计图"></a>设计图</h2><p><img src="/images/rro_frame.png" alt="设计的框架图"><br>从设计图中可看出，RtHttp为网络请求总入口：<br>问题1、2交给Retrofit Builder模式解决；<br>问题3、4、5、6交给OkHttpClient的Builer解决；<br>问题7将封装到RtHttp类中；<br>问题8由BaseApi中的Observable Builder解决；<br>问题9由ApiSubscriber的OnError方法解决。</p>
+<h2 id="设计代码"><a href="#设计代码" class="headerlink" title="设计代码"></a>设计代码</h2><h3 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h3><p>首先，我们来看封装后的网络请求使用：</p>
+<pre><code class="java">RtHttp.with(<span class="keyword">this</span>) <span class="comment">//设置Context</span>
+                .setShowWaitingDialog(<span class="keyword">true</span>) <span class="comment">//设置显示网络加载动画</span>
+                .setObservable(MobileApi.response(map,ProtocolUtils.PROTOCOL_MSG_ID_LOGIN))<span class="comment">//MobileApi.response 返回一个Observalbe</span>
+                .subscriber(<span class="keyword">new</span> ApiSubscriber&lt;JSONObject&gt;() { <span class="comment">//设置Subscriber，ApiSubscriber封装Subscriber;返回JSONObject仅是因为适配替换成Retrofit前的老代码</span>
+                    <span class="meta">@Override</span>
+                    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onNext</span><span class="params">(JSONObject result)</span> </span>{    <span class="comment">//只实现OnNext方法</span>
+                         <span class="comment">//具体业务逻辑</span>
+                    }
+                });
+</code></pre>
+<h3 id="RtHttp"><a href="#RtHttp" class="headerlink" title="RtHttp"></a>RtHttp</h3><p>封装后，RtHttp支持链式调用，我们来看RtHttp的代码：</p>
+<pre><code class="java"><span class="comment">/**
+ * 网络请求总入口
+ */</span>
+<span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">RtHttp</span></span>{
+
+    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String TAG = <span class="string">"RtHttp"</span>;
+    <span class="keyword">public</span> <span class="keyword">static</span> RtHttp instance = <span class="keyword">new</span> RtHttp(); <span class="comment">//单例模式</span>
+    <span class="keyword">private</span> Observable observable;
+    <span class="keyword">private</span> <span class="keyword">static</span> Context context;
+    <span class="keyword">private</span> <span class="keyword">boolean</span> isShowWaitingDialog;
+
+    <span class="comment">/**设置Context,使用弱引用
+     * <span class="doctag">@param</span> ct
+     * <span class="doctag">@return</span>
+     */</span>
+    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> RtHttp <span class="title">with</span><span class="params">(Context ct)</span></span>{
+        WeakReference&lt;Context&gt; wr = <span class="keyword">new</span> WeakReference&lt;Context&gt; (ct);
+        context = wr.get();
+        <span class="keyword">return</span> instance;
+    }
+
+    <span class="comment">/**设置是否显示加载动画
+     * <span class="doctag">@param</span> showWaitingDialog
+     * <span class="doctag">@return</span>
+     */</span>
+    <span class="function"><span class="keyword">public</span> RtHttp <span class="title">setShowWaitingDialog</span><span class="params">(<span class="keyword">boolean</span> showWaitingDialog)</span> </span>{
+        isShowWaitingDialog = showWaitingDialog;
+        <span class="keyword">return</span> instance;
+    }
+
+
+    <span class="comment">/**设置observable
+     * <span class="doctag">@param</span> observable
+     * <span class="doctag">@return</span>
+     */</span>
+    <span class="function"><span class="keyword">public</span>  RtHttp <span class="title">setObservable</span><span class="params">(Observable observable)</span> </span>{
+        <span class="keyword">this</span>.observable = observable;
+        <span class="keyword">return</span> instance;
+    }
+
+
+    <span class="comment">/**设置ApiSubscriber
+     * <span class="doctag">@param</span> subscriber
+     * <span class="doctag">@return</span>
+     */</span>
+    <span class="function"><span class="keyword">public</span> RtHttp <span class="title">subscriber</span><span class="params">(ApiSubscriber subscriber)</span></span>{
+        subscriber.setmCtx(context);  <span class="comment">//给subscriber设置Context，用于显示网络加载动画</span>
+        subscriber.setShowWaitDialog(isShowWaitingDialog); <span class="comment">//控制是否显示动画</span>
+        observable.subscribe(subscriber); <span class="comment">//RxJava 方法</span>
+        <span class="keyword">return</span> instance;
+    }
+
+
+    <span class="comment">/**
+     * 使用Retrofit.Builder和OkHttpClient.Builder构建NetworkApi
+     */</span>
+    <span class="keyword">public</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">NetworkApiBuilder</span></span>{
+        <span class="keyword">private</span> String baseUrl;  <span class="comment">//根地址</span>
+        <span class="keyword">private</span> <span class="keyword">boolean</span> isAddSession; <span class="comment">//是否添加sessionid</span>
+        <span class="keyword">private</span> HashMap&lt;String,String&gt; addDynamicParameterMap; <span class="comment">//url动态参数</span>
+        <span class="keyword">private</span> <span class="keyword">boolean</span> isAddParameter; <span class="comment">//url是否添加固定参数</span>
+        <span class="keyword">private</span> Retrofit.Builder rtBuilder; 
+        <span class="keyword">private</span> OkHttpClient.Builder okBuild;
+        <span class="keyword">private</span> Converter.Factory convertFactory; 
+
+        <span class="function"><span class="keyword">public</span> NetworkApiBuilder <span class="title">setConvertFactory</span><span class="params">(Converter.Factory convertFactory)</span> </span>{
+            <span class="keyword">this</span>.convertFactory = convertFactory;
+            <span class="keyword">return</span> <span class="keyword">this</span>;
+        }
+
+        <span class="function"><span class="keyword">public</span> NetworkApiBuilder <span class="title">setBaseUrl</span><span class="params">(String baseUrl)</span> </span>{
+            <span class="keyword">this</span>.baseUrl = baseUrl;
+            <span class="keyword">return</span> <span class="keyword">this</span>;
+        }
+
+        <span class="function"><span class="keyword">public</span> NetworkApiBuilder <span class="title">addParameter</span><span class="params">()</span></span>{
+            isAddParameter = <span class="keyword">true</span>;
+            <span class="keyword">return</span> <span class="keyword">this</span>;
+        }
+
+
+        <span class="function"><span class="keyword">public</span> NetworkApiBuilder <span class="title">addSession</span><span class="params">()</span> </span>{
+            isAddSession = <span class="keyword">true</span>;
+            <span class="keyword">return</span> <span class="keyword">this</span>;
+        }
+
+        <span class="function"><span class="keyword">public</span> NetworkApiBuilder <span class="title">addDynamicParameter</span><span class="params">(HashMap map)</span> </span>{
+            addDynamicParameterMap = map;
+            <span class="keyword">return</span> <span class="keyword">this</span>;
+        }
+
+
+        <span class="function"><span class="keyword">public</span> NetworkApi <span class="title">build</span><span class="params">()</span></span>{
+            rtBuilder= <span class="keyword">new</span> Retrofit.Builder();
+            okBuild = <span class="keyword">new</span> OkHttpClient().newBuilder();
+            <span class="keyword">if</span>(!TextUtils.isEmpty(baseUrl)){
+                rtBuilder.baseUrl(baseUrl);
+            }<span class="keyword">else</span>{
+                rtBuilder.baseUrl(Mobile.getBaseUrl());
+            }
+            <span class="keyword">if</span>(isAddSession){
+                okBuild.addInterceptor(<span class="keyword">new</span> HeaderInterceptor(context));
+            }
+            <span class="keyword">if</span>(isAddParameter){
+                okBuild.addInterceptor(<span class="keyword">new</span> ParameterInterceptor());
+            }
+            <span class="keyword">if</span>(addDynamicParameterMap!=<span class="keyword">null</span>){
+                okBuild.addInterceptor(<span class="keyword">new</span> DynamicParameterInterceptor(addDynamicParameterMap));
+            }
+            <span class="comment">//warning:must in the last intercepter to log the network;</span>
+            <span class="keyword">if</span>(Log.isDebuggable()){ <span class="comment">//改成自己的显示log判断逻辑</span>
+                okBuild.addInterceptor(<span class="keyword">new</span> LogInterceptor());
+            }
+            <span class="keyword">if</span>(convertFactory!=<span class="keyword">null</span>){
+                rtBuilder.addConverterFactory(convertFactory);
+            }<span class="keyword">else</span>{
+                rtBuilder.addConverterFactory(GsonConverterFactory.create());
+            }
+            rtBuilder.addCallAdapterFactory(RxJavaCallAdapterFactory.create())
+                     .client(okBuild.build());
+            <span class="keyword">return</span> rtBuilder.build().create(NetworkApi.class);
+        }
+    }
+}
+</code></pre>
+<p>RtHttp的代码很简洁，NetworkApiBuilder使用builder模式创建NetWorkApi，可以动态地配置Retrofit和OkHttpClient的参数。<br>Retrofit可配置参数：</p>
+<ol>
+<li>baseUrl:可通过设置baseUrl产生不同的retrofit</li>
+<li>addConverterFactory：通过设置addConverterFactory可适配后台接口返回不同的数据类型，例如json和String</li>
+</ol>
+<p>OkHttp可添加任意Interceptor实现网络请求的处理：</p>
+<ol>
+<li>HeaderInterceptory用于添加header(sessionid)</li>
+<li>ParameterInterceptor用于添加url固定的参数</li>
+<li>DynamicParameterInterceptor用于url添加动态参数</li>
+<li>LogInterceptor 用户显示log</li>
+</ol>
+<h3 id="MobileApi"><a href="#MobileApi" class="headerlink" title="MobileApi"></a>MobileApi</h3><p>下面我们来看Observable的创建：</p>
+<pre><code class="java"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MobileApi</span> <span class="keyword">extends</span> <span class="title">BaseApi</span></span>{
+
+    <span class="keyword">public</span> <span class="keyword">static</span> NetworkApi networkApi;
+    <span class="keyword">public</span> <span class="keyword">static</span> Observable obserable;
+
+    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> NetworkApi <span class="title">getNetworkApi</span><span class="params">()</span> </span>{ <span class="comment">//使用NetworkApiBuilder创建networkApi</span>
+        <span class="keyword">if</span>(networkApi==<span class="keyword">null</span> ){
+            networkApi = <span class="keyword">new</span> RtHttp.NetworkApiBuilder()
+                    .addSession()               <span class="comment">//添加sessionId</span>
+                    .addParameter()             <span class="comment">//添加固定参数</span>
+                    .build();
+        }
+        <span class="keyword">return</span> networkApi;
+    }
+
+    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Observable <span class="title">getObserable</span><span class="params">(Observable observable)</span> </span>{   
+        obserable = <span class="keyword">new</span> ObserableBuilder(observable)
+                .addApiException()   <span class="comment">//添加apiExcetion过滤</span>
+                .build();
+        <span class="keyword">return</span> obserable;
+    }
+
+    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span>   Observable <span class="title">response</span><span class="params">(HashMap map, <span class="keyword">int</span> protocolId)</span> </span>{
+        RequestBody body = toBody(map);
+        <span class="keyword">return</span> getObserable(getNetworkApi().response(protocolId, body));
+    }
+}
+</code></pre>
+<p>getNetworkApi()方法可以创建特定的NetworkApi，getObserable添加数据返回后特定的处理。</p>
+<h3 id="NetWorkApi接口定义"><a href="#NetWorkApi接口定义" class="headerlink" title="NetWorkApi接口定义"></a>NetWorkApi接口定义</h3><pre><code class="java"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">NetworkApi</span> </span>{
+
+    <span class="meta">@POST</span>(<span class="string">"open/open.do"</span>)
+    <span class="function">Observable&lt;Object&gt; <span class="title">post</span><span class="params">(@Query(<span class="string">"ACID"</span>)</span> <span class="keyword">int</span> acid, @Body RequestBody  entery)</span>;
+
+    <span class="meta">@POST</span>(<span class="string">"open/open.do"</span>)
+    Observable&lt;ResponseInfo&lt;Object&gt;&gt; response(<span class="meta">@Query</span>(<span class="string">"ACID"</span>) <span class="keyword">int</span> acid, <span class="meta">@Body</span> RequestBody  entery);
+}
+</code></pre>
+<p>acid是用于区分接口功能，RequestBody为请求的body参数。</p>
+<h3 id="BaseApi"><a href="#BaseApi" class="headerlink" title="BaseApi"></a>BaseApi</h3><pre><code class="java"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">BaseApi</span> </span>{
+
+    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> RequestBody <span class="title">toBody</span><span class="params">(HashMap map)</span> </span>{
+        Gson gson = <span class="keyword">new</span> Gson();
+        ImiRequestBean requestBean= <span class="keyword">new</span> ImiRequestBean();
+        requestBean.setRequeststamp(ProtocolUtils.getTimestamp());
+        requestBean.setData(map);
+        <span class="keyword">return</span> RequestBody.create(okhttp3.MediaType.parse(<span class="string">"application/json; charset=utf-8"</span>), gson.toJson(requestBean));
+    }
+
+    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> RequestBody <span class="title">toBody</span><span class="params">(JSONObject jsonObject)</span> </span>{
+        <span class="keyword">return</span> RequestBody.create(okhttp3.MediaType.parse(<span class="string">"application/json; charset=utf-8"</span>), (jsonObject).toString());
+    }
+
+    <span class="keyword">public</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">ObserableBuilder</span></span>{
+
+        <span class="keyword">private</span> Observable observable;
+        <span class="keyword">private</span> <span class="keyword">boolean</span> apiException;
+        <span class="keyword">private</span> <span class="keyword">boolean</span> toJSONJbject;
+        <span class="keyword">private</span> <span class="keyword">boolean</span> isWeb;
+        <span class="keyword">private</span> Scheduler subscribeScheduler;
+        <span class="keyword">private</span> Scheduler obscerveScheduler;
+
+        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setObscerveScheduler</span><span class="params">(Scheduler obscerveScheduler)</span> </span>{
+            <span class="keyword">this</span>.obscerveScheduler = obscerveScheduler;
+        }
+
+        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setSubscribeScheduler</span><span class="params">(Scheduler subscribeScheduler)</span> </span>{
+            <span class="keyword">this</span>.subscribeScheduler = subscribeScheduler;
+        }
+
+        <span class="function"><span class="keyword">public</span> <span class="title">ObserableBuilder</span><span class="params">(Observable o)</span> </span>{
+            <span class="keyword">this</span>.observable = o;
+        }
+
+        <span class="function"><span class="keyword">public</span> ObserableBuilder <span class="title">addApiException</span><span class="params">()</span></span>{
+            apiException = <span class="keyword">true</span>;
+            <span class="keyword">return</span> <span class="keyword">this</span>;
+        }
+        <span class="function"><span class="keyword">public</span> ObserableBuilder <span class="title">addToJSONObject</span><span class="params">()</span></span>{
+            toJSONJbject = <span class="keyword">true</span>;
+            <span class="keyword">return</span> <span class="keyword">this</span>;
+        }
+
+        <span class="function"><span class="keyword">public</span> ObserableBuilder <span class="title">isWeb</span><span class="params">()</span> </span>{
+            isWeb = <span class="keyword">true</span>;
+            <span class="keyword">return</span> <span class="keyword">this</span>;
+        }
+
+        <span class="function"><span class="keyword">public</span> Observable <span class="title">build</span><span class="params">()</span></span>{
+            <span class="keyword">if</span>(isWeb){
+                observable = observable.map(<span class="keyword">new</span> StringToJSONObjectFun1());
+            }
+            <span class="keyword">if</span>(apiException){
+                observable = observable.flatMap(<span class="keyword">new</span> ApiThrowExcepitionFun1());
+            }
+            <span class="keyword">if</span>(toJSONJbject){
+                observable = observable.map(<span class="keyword">new</span> ObjectToJSONObjectFun1());
+            }
+            <span class="keyword">if</span>(subscribeScheduler!=<span class="keyword">null</span>){
+                observable = observable.subscribeOn(subscribeScheduler);
+            }<span class="keyword">else</span> {
+                observable = observable.subscribeOn(Schedulers.io());
+            }
+            <span class="keyword">if</span>(obscerveScheduler!=<span class="keyword">null</span>){
+                observable = observable.observeOn(obscerveScheduler);
+            }<span class="keyword">else</span>{
+                observable = observable.observeOn(AndroidSchedulers.mainThread());
+            }
+            <span class="keyword">return</span> observable;
+        }
+    }
+}
+</code></pre>
+<p>BaseApi提供toBody的方法，支持将JSONObject和HashMap转换成RequestBody。ObserableBuilder用于处理NetworkApi返回的Observalbe对象。使用ObserableBuilder可返回不同的observalbe。默认设置数据请求在子线程，处理完返回OnNext方法使用主线程。</p>
+<h3 id="WebApi"><a href="#WebApi" class="headerlink" title="WebApi"></a>WebApi</h3><p>webApi跟MobileApi请求地址以及返回数据的数据都不一样，WebApi返回的数据类型是String，我们来看WebApi的代码：</p>
+<pre><code class="java"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">WebApi</span> <span class="keyword">extends</span> <span class="title">BaseApi</span> </span>{
+
+    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> ROLLER = <span class="number">1</span>;
+    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> FRUIT = <span class="number">2</span>;
+    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> WX = <span class="number">3</span>;
+    <span class="keyword">public</span> <span class="keyword">static</span> NetworkApi networkApi;
+    <span class="keyword">public</span> <span class="keyword">static</span> Observable observable;
+
+    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> NetworkApi <span class="title">getNetworkApi</span><span class="params">(String baseUrl, HashMap map)</span> </span>{
+        networkApi = <span class="keyword">new</span> RtHttp.NetworkApiBuilder()
+                .setBaseUrl(baseUrl)
+                .addDynamicParameter(map)
+                .setConvertFactory(StringConverFactory.create())
+                .build();
+        <span class="keyword">return</span> networkApi;
+    }
+
+    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> NetworkApi <span class="title">getRollerApi</span><span class="params">(HashMap map)</span> </span>{
+        <span class="keyword">return</span> getNetworkApi(Web.getRollerUrl(), map);
+    }
+
+    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> NetworkApi <span class="title">getFruitApi</span><span class="params">(HashMap map)</span> </span>{
+        <span class="keyword">return</span> getNetworkApi(Web.getFruitUrl(), map);
+    }
+
+    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> NetworkApi <span class="title">getWxApi</span><span class="params">(HashMap map)</span> </span>{
+        <span class="keyword">return</span> getNetworkApi(Web.getWXUrl(), map);
+    }
+
+    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Observable <span class="title">getObserable</span><span class="params">(Observable observable)</span> </span>{
+        observable = <span class="keyword">new</span> ObserableBuilder(observable)
+                .isWeb()
+                .build();
+        <span class="keyword">return</span> observable;
+    }
+
+    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Observable <span class="title">webPost</span><span class="params">(HashMap map, String action, <span class="keyword">int</span> type)</span> </span>{
+        NetworkApi networkApi = <span class="keyword">null</span>;
+        <span class="keyword">if</span> (type == ROLLER) {
+            networkApi = getRollerApi(map);
+        } <span class="keyword">else</span> <span class="keyword">if</span> (type == FRUIT) {
+            networkApi = getFruitApi(map);
+        } <span class="keyword">else</span> <span class="keyword">if</span> (type == WX) {
+            networkApi = getWxApi(map);
+        }
+        String[] str = action.split(<span class="string">"/"</span>);
+        <span class="keyword">if</span> (str.length == <span class="number">1</span>) {
+            observable = networkApi.webPost(str[<span class="number">0</span>]);
+        } <span class="keyword">else</span> <span class="keyword">if</span> (str.length == <span class="number">2</span>) {
+            observable = networkApi.webPost(str[<span class="number">0</span>], str[<span class="number">1</span>]);
+        } <span class="keyword">else</span> {
+            <span class="keyword">return</span> <span class="keyword">null</span>;
+        }
+        <span class="keyword">return</span> getObserable(observable);
+    }
+}
+</code></pre>
+<p>getNetworkApi的参数时baseUrl和设置动态url参数 的map。getObserable的方法不使用addApiException的方法，而是使用isWeb()的方法。可以看出，变化的代码都封装在BaseApi的子类中。通过创建不同的子类，实现不同的网络请求及数据处理逻辑。</p>
+<h3 id="ApiSubscriber"><a href="#ApiSubscriber" class="headerlink" title="ApiSubscriber"></a>ApiSubscriber</h3><p>ApiSubscriber封装了是否显示加载动画和对onError（）的默认处理。</p>
+<pre><code class="java"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">ApiSubscriber</span>&lt;<span class="title">T</span>&gt; <span class="keyword">extends</span> <span class="title">Subscriber</span>&lt;<span class="title">T</span>&gt; </span>{
+
+    <span class="keyword">private</span>  Context mCtx;
+    <span class="keyword">private</span> WaitingDialog waitingDialog;  <span class="comment">//加载dialog</span>
+    <span class="keyword">private</span> <span class="keyword">boolean</span> isShowWaitDialog;
+
+    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setShowWaitDialog</span><span class="params">(<span class="keyword">boolean</span> showWaitDialog)</span> </span>{
+        isShowWaitDialog = showWaitDialog;
+    }
+
+    <span class="meta">@Override</span>
+    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onStart</span><span class="params">()</span> </span>{
+        <span class="keyword">super</span>.onStart();
+        <span class="keyword">if</span>(isShowWaitDialog){
+            showWaitDialog();
+        }
+    }
+
+    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setmCtx</span><span class="params">(Context mCtx)</span> </span>{
+        <span class="keyword">this</span>.mCtx = mCtx;
+    }
+
+    <span class="meta">@Override</span>
+    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onCompleted</span><span class="params">()</span> </span>{
+        <span class="keyword">if</span>(isShowWaitDialog){
+            dismissDialog();
+        }
+    }
+
+    <span class="comment">/**
+     * 对 onError进行处理
+     * <span class="doctag">@param</span> e
+     */</span>
+    <span class="meta">@Override</span>
+    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onError</span><span class="params">(Throwable e)</span> </span>{
+        <span class="keyword">if</span>(isShowWaitDialog){
+            dismissDialog();
+        }
+        Throwable throwable = e;
+        <span class="keyword">if</span>(Log.isDebuggable()){
+            Log.i(RtHttp.TAG,throwable.getMessage().toString());
+        }
+        <span class="comment">/**
+         * 获取根源 异常
+         */</span>
+        <span class="keyword">while</span> (throwable.getCause() != <span class="keyword">null</span>){
+            e = throwable;
+            throwable = throwable.getCause();
+        }
+        <span class="keyword">if</span>(e <span class="keyword">instanceof</span> HttpException){<span class="comment">//对网络异常 弹出相应的toast</span>
+            HttpException httpException = (HttpException) e;
+            <span class="keyword">if</span>(TextUtils.isEmpty(httpException.getMessage())){
+                ToastUtil.showToast(mCtx, R.string.imi_toast_common_net_error);
+            }<span class="keyword">else</span> {
+                String errorMsg = httpException.getMessage();
+                <span class="keyword">if</span>(TextUtils.isEmpty(errorMsg)){
+                    ToastUtil.showToast(mCtx, R.string.imi_toast_common_net_error);
+                }<span class="keyword">else</span> {
+                   ToastUtil.showToast(mCtx, errorMsg);
+                }
+
+            }
+        }<span class="keyword">else</span> <span class="keyword">if</span>(e <span class="keyword">instanceof</span> ApiException){<span class="comment">//服务器返回的错误</span>
+            onResultError((ApiException) e);
+        }<span class="keyword">else</span> <span class="keyword">if</span>(e <span class="keyword">instanceof</span> JsonParseException
+                || e <span class="keyword">instanceof</span> JSONException
+                || e <span class="keyword">instanceof</span> ParseException){<span class="comment">//解析异常</span>
+            ToastUtil.showToast(mCtx, R.string.imi_toast_common_parse_error);
+        }<span class="keyword">else</span> <span class="keyword">if</span>(e <span class="keyword">instanceof</span> UnknownHostException){
+            ToastUtil.showToast(mCtx, R.string.imi_toast_common_server_error);
+        }<span class="keyword">else</span> <span class="keyword">if</span>(e <span class="keyword">instanceof</span> SocketTimeoutException) {
+           ToastUtil.showToast(mCtx, R.string.imi_toast_common_net_timeout);
+        }<span class="keyword">else</span> {
+            e.printStackTrace();
+            ToastUtil.showToast(mCtx, R.string.imi_toast_common_net_error);
+        }
+    }
+    <span class="comment">/**
+     * 服务器返回的错误
+     * <span class="doctag">@param</span> ex
+     */</span>
+    <span class="function"><span class="keyword">protected</span>  <span class="keyword">void</span> <span class="title">onResultError</span><span class="params">(ApiException ex)</span></span>{
+        <span class="keyword">switch</span> (ex.getCode()){  <span class="comment">//服务器返回code默认处理</span>
+            <span class="keyword">case</span> <span class="number">10021</span>:
+                ToastUtil.showToast(mCtx, R.string.imi_login_input_mail_error);
+                <span class="keyword">break</span>;
+            <span class="keyword">case</span> <span class="number">10431</span>:
+                ToastUtil.showToast(mCtx, R.string.imi_const_tip_charge);
+                <span class="keyword">break</span>;
+            <span class="keyword">default</span>:
+                String msg = ex.getMessage();
+                <span class="keyword">if</span>(TextUtils.isEmpty(msg)){
+                    ToastUtil.showToast(mCtx, R.string.imi_toast_common_net_error);
+                }<span class="keyword">else</span> {
+                    ToastUtil.showToast(mCtx, msg);
+                }
+        }
+
+    }
+
+    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">dismissDialog</span><span class="params">()</span></span>{
+        <span class="keyword">if</span>(waitingDialog!=<span class="keyword">null</span>) {
+            <span class="keyword">if</span>(waitingDialog.isShowing()) {
+                waitingDialog.dismiss();
+            }
+        }
+    }
+
+    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">showWaitDialog</span><span class="params">()</span></span>{
+        <span class="keyword">if</span> (waitingDialog == <span class="keyword">null</span>) {
+            waitingDialog = <span class="keyword">new</span> WaitingDialog(mCtx);
+            waitingDialog.setDialogWindowStyle();
+            waitingDialog.setCanceledOnTouchOutside(<span class="keyword">false</span>);
+        }
+        waitingDialog.show();
+    }
+
+
+}
+</code></pre>
+<h3 id="ApiThrowExcepitionFun1"><a href="#ApiThrowExcepitionFun1" class="headerlink" title="ApiThrowExcepitionFun1"></a>ApiThrowExcepitionFun1</h3><p>使用ObservalbeBuilder中通过addApiException()的方可以法添加对服务器返回code的处理，下面来看抛出异常的代码：</p>
+<pre><code class="java"><span class="comment">/**
+ * 用来统一处理Http的resultCode,并将HttpResult的Data部分剥离出来返回给subscriber
+ *
+ * <span class="doctag">@param</span> &lt;T&gt; Subscriber真正需要的数据类型，也就是Data部分的数据类型
+ */</span>
+<span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ApiThrowExcepitionFun1</span>&lt;<span class="title">T</span>&gt; <span class="keyword">implements</span> <span class="title">Func1</span>&lt;<span class="title">ResponseInfo</span>&lt;<span class="title">T</span>&gt;, <span class="title">Observable</span>&lt;<span class="title">T</span>&gt;&gt;</span>{
+
+    <span class="meta">@Override</span>
+    <span class="function"><span class="keyword">public</span> Observable&lt;T&gt; <span class="title">call</span><span class="params">(ResponseInfo&lt;T&gt; responseInfo)</span> </span>{
+        <span class="keyword">if</span> (responseInfo.getCode()!= <span class="number">200</span>) {  <span class="comment">//如果code返回的不是200,则抛出ApiException异常，否则返回data数据</span>
+            <span class="keyword">return</span> Observable.error(<span class="keyword">new</span> ApiException(responseInfo.getCode(),responseInfo.getMessage()));
+        }
+        <span class="keyword">return</span> Observable.just(responseInfo.getData());
+    }
+}
+</code></pre>
+<h3 id="ResponseInfo"><a href="#ResponseInfo" class="headerlink" title="ResponseInfo"></a>ResponseInfo</h3><pre><code class="java"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ResponseInfo</span>&lt;<span class="title">T</span>&gt; </span>{
+    <span class="keyword">private</span> <span class="keyword">int</span> code;
+    <span class="keyword">private</span> String message;
+    <span class="keyword">private</span> T data;
+    <span class="keyword">private</span> String responsestamp;
+    <span class="function"><span class="keyword">public</span> String <span class="title">getResponsestamp</span><span class="params">()</span> </span>{
+        <span class="keyword">return</span> responsestamp;
+    }
+    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setResponsestamp</span><span class="params">(String responsestamp)</span> </span>{
+        <span class="keyword">this</span>.responsestamp = responsestamp;
+    }
+    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getCode</span><span class="params">()</span> </span>{
+        <span class="keyword">return</span> code;
+    }
+    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setCode</span><span class="params">(<span class="keyword">int</span> code)</span> </span>{
+        <span class="keyword">this</span>.code = code;
+    }
+    <span class="function"><span class="keyword">public</span> String <span class="title">getMessage</span><span class="params">()</span> </span>{
+        <span class="keyword">return</span> message;
+    }
+    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setMessage</span><span class="params">(String message)</span> </span>{
+        <span class="keyword">this</span>.message = message;
+    }
+
+    <span class="function"><span class="keyword">public</span> T <span class="title">getData</span><span class="params">()</span> </span>{
+        <span class="keyword">return</span> data;
+    }
+    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setData</span><span class="params">(T data)</span> </span>{
+        <span class="keyword">this</span>.data = data;
+    }
+}
+</code></pre>
+<h3 id="ApiException"><a href="#ApiException" class="headerlink" title="ApiException"></a>ApiException</h3><pre><code class="java"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ApiException</span> <span class="keyword">extends</span> <span class="title">Exception</span> </span>{
+    <span class="keyword">int</span> code;
+    <span class="function"><span class="keyword">public</span> <span class="title">ApiException</span><span class="params">(<span class="keyword">int</span> code,String s)</span> </span>{
+        <span class="keyword">super</span>(s);
+        <span class="keyword">this</span>.code = code;
+    }
+
+    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getCode</span><span class="params">()</span> </span>{
+        <span class="keyword">return</span> code;
+    }
+}
+</code></pre>
+<h3 id="ParameterInterceptor"><a href="#ParameterInterceptor" class="headerlink" title="ParameterInterceptor"></a>ParameterInterceptor</h3><pre><code class="java"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ParameterInterceptor</span> <span class="keyword">implements</span> <span class="title">Interceptor</span></span>{
+         <span class="meta">@Override</span>
+         <span class="function"><span class="keyword">public</span> Response <span class="title">intercept</span><span class="params">(Chain chain)</span> <span class="keyword">throws</span> IOException </span>{
+        Request request = chain.request();
+        <span class="comment">//get请求后面追加共同的参数</span>
+        HttpUrl httpUrl = request.url().newBuilder()   <span class="comment">//使用addQueryParameter()在url后面添加参数</span>
+                .addQueryParameter(<span class="string">"userId"</span>, CommonData.getUid()+<span class="string">""</span>)
+                .build();
+        request = request.newBuilder().url(httpUrl).build();
+        <span class="keyword">return</span> chain.proceed(request);
+    }
+}
+</code></pre>
+<h3 id="DynamicParameterInterceptor"><a href="#DynamicParameterInterceptor" class="headerlink" title="DynamicParameterInterceptor"></a>DynamicParameterInterceptor</h3><pre><code class="java"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">DynamicParameterInterceptor</span> <span class="keyword">implements</span> <span class="title">Interceptor</span></span>{
+
+    <span class="keyword">private</span> HashMap&lt;String, String&gt; map;
+
+    <span class="function"><span class="keyword">public</span> <span class="title">DynamicParameterInterceptor</span><span class="params">(HashMap&lt;String, String&gt; map)</span> </span>{
+        <span class="keyword">this</span>.map = map;
+    }
+    <span class="meta">@Override</span>
+    <span class="function"><span class="keyword">public</span> Response <span class="title">intercept</span><span class="params">(Chain chain)</span> <span class="keyword">throws</span> IOException </span>{
+        Request request = chain.request();
+        <span class="comment">//get请求后面追加共同的参数</span>
+        HttpUrl.Builder bulider = request.url().newBuilder();
+        Iterator iter = map.entrySet().iterator();
+        <span class="keyword">while</span> (iter.hasNext()) {
+            Map.Entry entry = (Map.Entry) iter.next();
+            bulider.addQueryParameter((String) entry.getKey(), (String) entry.getValue());
+        }
+        request = request.newBuilder().url(bulider.build()).build();
+        <span class="keyword">return</span> chain.proceed(request);
+    }
+}
+</code></pre>
+<h3 id="HeadInterceptor"><a href="#HeadInterceptor" class="headerlink" title="HeadInterceptor"></a>HeadInterceptor</h3><pre><code class="java"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">HeaderInterceptor</span> <span class="keyword">implements</span> <span class="title">Interceptor</span></span>{
+    <span class="keyword">private</span> Context context;
+    <span class="function"><span class="keyword">public</span> <span class="title">HeaderInterceptor</span><span class="params">(Context context)</span> </span>{
+        <span class="keyword">this</span>.context = context;
+    }
+    <span class="meta">@Override</span>
+    <span class="function"><span class="keyword">public</span> Response <span class="title">intercept</span><span class="params">(Chain chain)</span> <span class="keyword">throws</span> IOException </span>{
+        Request original = chain.request();
+        Request.Builder requestBuilder = original.newBuilder()
+                .header(<span class="string">"sessionId"</span>, CommonData.getUserInfo(context).sessionId); <span class="comment">//添加sessionId</span>
+        Request request = requestBuilder.build();
+        <span class="keyword">return</span> chain.proceed(request);
+    }
+}
+</code></pre>
+<h3 id="LogInterceptor"><a href="#LogInterceptor" class="headerlink" title="LogInterceptor"></a>LogInterceptor</h3><pre><code class="java"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">LogInterceptor</span> <span class="keyword">implements</span> <span class="title">Interceptor</span> </span>{
+
+    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String TAG = <span class="string">"LogInterceptor"</span>;
+    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Charset UTF8 = Charset.forName(<span class="string">"UTF-8"</span>);
+
+    <span class="meta">@Override</span>
+    <span class="function"><span class="keyword">public</span> Response <span class="title">intercept</span><span class="params">(Chain chain)</span> <span class="keyword">throws</span> IOException </span>{
+        Log.d(TAG,<span class="string">"before chain,request()"</span>);
+        Request request = chain.request();
+        Response response;
+        <span class="keyword">try</span> {
+            <span class="keyword">long</span> t1 = System.nanoTime();
+            response = chain.proceed(request);
+            <span class="keyword">long</span> t2 = System.nanoTime();
+            <span class="keyword">double</span> time = (t2 - t1) / <span class="number">1e6</span>d;
+            String acid = request.url().queryParameter(<span class="string">"ACID"</span>);     <span class="comment">//本项目log特定参数项目接口acid</span>
+            String userId = request.url().queryParameter(<span class="string">"userId"</span>); <span class="comment">//本项目log特定参数用户id</span>
+            String type = <span class="string">""</span>;
+            <span class="keyword">if</span> (request.method().equals(<span class="string">"GET"</span>)) {
+                type = <span class="string">"GET"</span>;
+            } <span class="keyword">else</span> <span class="keyword">if</span> (request.method().equals(<span class="string">"POST"</span>)) {
+                type = <span class="string">"POST"</span>;
+            } <span class="keyword">else</span> <span class="keyword">if</span> (request.method().equals(<span class="string">"PUT"</span>)) {
+                type = <span class="string">"PUT"</span>;
+            } <span class="keyword">else</span> <span class="keyword">if</span> (request.method().equals(<span class="string">"DELETE"</span>)) {
+                type = <span class="string">"DELETE"</span>;
+            }
+            BufferedSource source = response.body().source();
+            source.request(Long.MAX_VALUE); <span class="comment">// Buffer the entire body.</span>
+            Buffer buffer = source.buffer();
+            String logStr = <span class="string">"\n--------------------"</span>.concat(TextUtils.isEmpty(acid) ? <span class="string">""</span> : acid).concat(<span class="string">"  begin--------------------\n"</span>)
+                    .concat(type)
+                    .concat(<span class="string">"\nacid-&gt;"</span>).concat(TextUtils.isEmpty(acid) ? <span class="string">""</span> : acid)
+                    .concat(<span class="string">"\nuserId-&gt;"</span>).concat(TextUtils.isEmpty(userId) ? <span class="string">""</span> : userId)
+                    .concat(<span class="string">"\nnetwork code-&gt;"</span>).concat(response.code() + <span class="string">""</span>)
+                    .concat(<span class="string">"\nurl-&gt;"</span>).concat(request.url() + <span class="string">""</span>)
+                    .concat(<span class="string">"\ntime-&gt;"</span>).concat(time + <span class="string">""</span>)
+                    .concat(<span class="string">"\nrequest headers-&gt;"</span>).concat(request.headers() + <span class="string">""</span>)
+                    .concat(<span class="string">"request-&gt;"</span>).concat(bodyToString(request.body()))
+                    .concat(<span class="string">"\nbody-&gt;"</span>).concat(buffer.clone().readString(UTF8));
+            Log.i(RtHttp.TAG, logStr);
+        } <span class="keyword">catch</span> (Exception e) {
+            <span class="keyword">throw</span> e;
+        }
+        <span class="keyword">return</span> response;
+    }
+    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> String <span class="title">bodyToString</span><span class="params">(<span class="keyword">final</span> RequestBody request)</span> </span>{
+
+        <span class="keyword">try</span> {
+            <span class="keyword">final</span> Buffer buffer = <span class="keyword">new</span> Buffer();
+            request.writeTo(buffer);
+            <span class="keyword">return</span> buffer.readUtf8();
+        } <span class="keyword">catch</span> (<span class="keyword">final</span> IOException e) {
+            <span class="keyword">return</span> <span class="string">"did not work"</span>;
+        }
+    }
+
+}
+</code></pre>
+<h1 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h1><p>我们来看，网络请求返回的log如下：</p>
+<pre><code class="java">RtHttp: --------------------  begin--------------------
+        POST
+        acid-&gt;
+        userId-&gt;<span class="number">306448537</span>
+        network code-&gt;<span class="number">200</span>
+        url-&gt;http:<span class="comment">//*******/user/loadInitData?userId=306448537&amp;userSecretKey=ckj5k3vrxao***ekblcru5v3r</span>
+        time-&gt;<span class="number">160.708437</span>
+        request headers-&gt;request-&gt;
+        body-&gt;({<span class="string">"data"</span>:{<span class="string">"getTime"</span>:<span class="number">1</span>,<span class="string">"prize"</span>:[{<span class="string">"id"</span>:<span class="number">4</span>,<span class="string">"name"</span>:<span class="string">"跑车, 价值8000金豆"</span>,<span class="string">"num"</span>:<span class="string">"x1"</span>},{<span class="string">"id"</span>:<span class="number">9</span>,<span class="string">"name"</span>:<span class="string">"生日蛋糕, 价值80000金豆"</span>,<span class="string">"num"</span>:<span class="string">"x1"</span>},{<span class="string">"id"</span>:<span class="number">11</span>,<span class="string">"name"</span>:<span class="string">"爱的火山, 价值80000金豆"</span>,<span class="string">"num"</span>:<span class="string">"x1"</span>},{<span class="string">"id"</span>:<span class="number">15</span>,<span class="string">"name"</span>:<span class="string">"68888金豆"</span>,<span class="string">"num"</span>:<span class="string">"68888"</span>},{<span class="string">"id"</span>:<span class="number">63</span>,<span class="string">"name"</span>:<span class="string">"炫酷边框,发言与众不同!"</span>,<span class="string">"num"</span>:<span class="string">"x1"</span>},{<span class="string">"id"</span>:<span class="number">25</span>,<span class="string">"name"</span>:<span class="string">"中幸运石, 5分钟内中奖率中幅提升"</span>,<span class="string">"num"</span>:<span class="string">"x1"</span>},{<span class="string">"id"</span>:<span class="number">28</span>,<span class="string">"name"</span>:<span class="string">"1888阳光, 价值944金豆"</span>,<span class="string">"num"</span>:<span class="string">"1888"</span>},{<span class="string">"id"</span>:<span class="number">30</span>,<span class="string">"name"</span>:<span class="string">"自行车, 价值80000金豆"</span>,<span class="string">"num"</span>:<span class="string">"x1"</span>},{<span class="string">"id"</span>:<span class="number">59</span>,<span class="string">"name"</span>:<span class="string">"红玫瑰, 价值1000金豆"</span>,<span class="string">"num"</span>:<span class="string">"10"</span>},{<span class="string">"id"</span>:<span class="number">34</span>,<span class="string">"name"</span>:<span class="string">"超级靓号宝箱,价值700000金豆"</span>,<span class="string">"num"</span>:<span class="string">"x1"</span>},{<span class="string">"id"</span>:<span class="number">36</span>,<span class="string">"name"</span>:<span class="string">"花精灵520个, 女神的最爱"</span>,<span class="string">"num"</span>:<span class="string">"x520"</span>},{<span class="string">"id"</span>:<span class="number">38</span>,<span class="string">"name"</span>:<span class="string">"幸运星, 30分钟内中奖率极大提升"</span>,<span class="string">"num"</span>:<span class="string">"x1"</span>},{<span class="string">"id"</span>:<span class="number">40</span>,<span class="string">"name"</span>:<span class="string">"钻石项链, 价值12000金豆"</span>,<span class="string">"num"</span>:<span class="string">"x3"</span>},{<span class="string">"id"</span>:<span class="number">42</span>,<span class="string">"name"</span>:<span class="string">"水晶鞋, 价值2400金豆"</span>,<span class="string">"num"</span>:<span class="string">"x3"</span>}],<span class="string">"resetTime"</span>:<span class="number">6</span>,<span class="string">"userId"</span>:<span class="number">306448537</span>},<span class="string">"msg"</span>:<span class="string">"OK"</span>,<span class="string">"result"</span>:<span class="number">1</span>})
+</code></pre>
+<p>以上是封装的代码，通过使用Builder模式可以创建不同的Networkapi实例，从而满足项目中的需求及能够更好的应对变化的需求。</p>
+<h1 id="引用"><a href="#引用" class="headerlink" title="引用"></a>引用</h1><blockquote>
+<p><a href="http://stackoverflow.com/questions/24243410/handling-api-exceptions-in-rxjava" target="_blank" rel="external">Handling API exceptions in RxJava</a><br><a href="https://gank.io/post/56e80c2c677659311bed9841" target="_blank" rel="external">RxJava 与 Retrofit 结合的最佳实践</a><br><a href="https://gank.io/post/560e15be2dca930e00da1083" target="_blank" rel="external">给 Android 开发者的 RxJava 详解</a><br><a href="http://www.jianshu.com/p/fe89c0991aed" target="_blank" rel="external">Retrofit+RxJava+OkHttp链式封装</a><br><a href="http://www.ruanyifeng.com/blog/2016/08/http.html" target="_blank" rel="external">HTTP 协议入门</a><br><a href="http://square.github.io/okhttp/#examples" target="_blank" rel="external">OkHttp官网</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2016/11/09/不是学习工厂模式最简单的指南/" itemprop="url">
                   不是学习工厂模式最简单的指南
                 </a>
@@ -1156,7 +1909,7 @@ customer.startUp(iphone5Factory);
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">4</span>
+              <span class="site-state-item-count">5</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1166,7 +1919,7 @@ customer.startUp(iphone5Factory);
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">10</span>
+                <span class="site-state-item-count">14</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
