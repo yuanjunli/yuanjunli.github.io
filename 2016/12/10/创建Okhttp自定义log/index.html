@@ -96,16 +96,16 @@ Http协议只有对Http协议有基本的了解，才能更好的调试网络接
 背景本文重点讲解如何在使用OkHttp作为网络请求框架的前提下，如何自定义一个适合自己项目的Http Log，从而提升网络Api开发、调试效率。
 Http协议只有对Http协议有基本的了解，才能更好的调试网络接口。
 一个故事男女主一次偶然的机会，开始信件传情，但他们的信件并不是直接寄给对方，而是先寄到某个地点A，由地点A的主人转发。（好吧，这是《北京遇上西雅">
-<meta property="og:image" content="http://yoursite.com/images/httplog_struct.png">
-<meta property="og:image" content="http://yoursite.com/images/httplog_xitu.png">
-<meta property="og:updated_time" content="2016-12-12T08:57:59.318Z">
+<meta property="og:image" content="https://yuanjunli.github.io/images/httplog_struct.png">
+<meta property="og:image" content="https://yuanjunli.github.io/images/httplog_xitu.png">
+<meta property="og:updated_time" content="2016-12-12T09:00:39.828Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="创建Okhttp自定义Log">
 <meta name="twitter:description" content="原文链接：创建OkHttp自定义Log
 背景本文重点讲解如何在使用OkHttp作为网络请求框架的前提下，如何自定义一个适合自己项目的Http Log，从而提升网络Api开发、调试效率。
 Http协议只有对Http协议有基本的了解，才能更好的调试网络接口。
 一个故事男女主一次偶然的机会，开始信件传情，但他们的信件并不是直接寄给对方，而是先寄到某个地点A，由地点A的主人转发。（好吧，这是《北京遇上西雅">
-<meta name="twitter:image" content="http://yoursite.com/images/httplog_struct.png">
+<meta name="twitter:image" content="https://yuanjunli.github.io/images/httplog_struct.png">
 
 
 
@@ -310,7 +310,7 @@ Http协议只有对Http协议有基本的了解，才能更好的调试网络接
 <li>把信件放到信封里寄出去。</li>
 </ol>
 <p>显然，女主收到信后回复信件也是同样的流程。</p>
-<h2 id="类比"><a href="#类比" class="headerlink" title="类比"></a>类比</h2><p>我们现在将Http协议的消息结构和故事主人公收发信的过程做一个类比：<br><img src="/images/httplog_struct.png" alt="类比图"><br>下面是使用Fiddler工具抓取www.xitu.io的网络请求和响应图：<br><img src="/images/httplog_xitu.png" alt="稀土网络响应图"></p>
+<h2 id="类比"><a href="#类比" class="headerlink" title="类比"></a>类比</h2><p>我们现在将Http协议的消息结构和故事主人公收发信的过程做一个类比：<br><img src="https://yuanjunli.github.io/images/httplog_struct.png" alt="类比图"><br>下面是使用Fiddler工具抓取www.xitu.io的网络请求和响应图：<br><img src="https://yuanjunli.github.io/images/httplog_xitu.png" alt="稀土网络响应图"></p>
 <h2 id="Http消息结构"><a href="#Http消息结构" class="headerlink" title="Http消息结构"></a>Http消息结构</h2><p>由前面的分析可知，Http请求消息由三部分组成：</p>
 <ol>
 <li>请求行由3部分组成：①请求的方法,POST还是GET等；②请求路径；③Http协议</li>
