@@ -68,7 +68,7 @@
 <link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="Okhttp,Log," />
+  <meta name="keywords" content="OkHttp,Log," />
 
 
 
@@ -84,13 +84,28 @@
 
 
 
+<meta name="description" content="原文链接：创建OkHttp自定义Log
+背景本文重点讲解如何在使用OkHttp作为网络请求框架的前提下，如何自定义一个适合自己项目的Http Log，从而提升网络Api开发、调试效率。
+Http协议只有对Http协议有基本的了解，才能更好的调试网络接口。
+一个故事男女主一次偶然的机会，开始信件传情，但他们的信件并不是直接寄给对方，而是先寄到某个地点A，由地点A的主人转发。（好吧，这是《北京遇上西雅">
 <meta property="og:type" content="article">
-<meta property="og:title" content="创建Okhttp自定义log">
-<meta property="og:url" content="http://yoursite.com/2016/12/10/创建Okhttp自定义log/index.html">
+<meta property="og:title" content="创建Okhttp自定义Log">
+<meta property="og:url" content="http://yoursite.com/2016/12/10/创建OkHttp自定义Log/index.html">
 <meta property="og:site_name" content="NEXTB">
-<meta property="og:updated_time" content="2016-12-10T06:16:24.879Z">
+<meta property="og:description" content="原文链接：创建OkHttp自定义Log
+背景本文重点讲解如何在使用OkHttp作为网络请求框架的前提下，如何自定义一个适合自己项目的Http Log，从而提升网络Api开发、调试效率。
+Http协议只有对Http协议有基本的了解，才能更好的调试网络接口。
+一个故事男女主一次偶然的机会，开始信件传情，但他们的信件并不是直接寄给对方，而是先寄到某个地点A，由地点A的主人转发。（好吧，这是《北京遇上西雅">
+<meta property="og:image" content="http://yoursite.com/images/httplog_struct.png">
+<meta property="og:image" content="http://yoursite.com/images/httplog_xitu.png">
+<meta property="og:updated_time" content="2016-12-12T08:52:36.652Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="创建Okhttp自定义log">
+<meta name="twitter:title" content="创建Okhttp自定义Log">
+<meta name="twitter:description" content="原文链接：创建OkHttp自定义Log
+背景本文重点讲解如何在使用OkHttp作为网络请求框架的前提下，如何自定义一个适合自己项目的Http Log，从而提升网络Api开发、调试效率。
+Http协议只有对Http协议有基本的了解，才能更好的调试网络接口。
+一个故事男女主一次偶然的机会，开始信件传情，但他们的信件并不是直接寄给对方，而是先寄到某个地点A，由地点A的主人转发。（好吧，这是《北京遇上西雅">
+<meta name="twitter:image" content="http://yoursite.com/images/httplog_struct.png">
 
 
 
@@ -111,10 +126,10 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2016/12/10/创建Okhttp自定义log/"/>
+  <link rel="canonical" href="http://yoursite.com/2016/12/10/创建OkHttp自定义Log/"/>
 
 
-  <title> 创建Okhttp自定义log | NEXTB </title>
+  <title> 创建Okhttp自定义Log | NEXTB </title>
 </head>
 
 
@@ -229,7 +244,7 @@
             
             
               
-                创建Okhttp自定义log
+                创建Okhttp自定义Log
               
             
           </h1>
@@ -252,8 +267,8 @@
             
               <span class="post-comments-count">
                 &nbsp; | &nbsp;
-                <a href="/2016/12/10/创建Okhttp自定义log/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/12/10/创建Okhttp自定义log/" itemprop="commentsCount"></span>
+                <a href="/2016/12/10/创建OkHttp自定义Log/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/12/10/创建OkHttp自定义Log/" itemprop="commentsCount"></span>
                 </a>
               </span>
             
@@ -263,7 +278,7 @@
 
           
           
-             <span id="/2016/12/10/创建Okhttp自定义log/" class="leancloud_visitors" data-flag-title="创建Okhttp自定义log">
+             <span id="/2016/12/10/创建OkHttp自定义Log/" class="leancloud_visitors" data-flag-title="创建Okhttp自定义Log">
                &nbsp; | &nbsp;
                <span class="post-meta-item-icon">
                  <i class="fa fa-eye"></i>
@@ -285,7 +300,124 @@
       
 
       
-        
+        <p>原文链接：<a href="yuanjunli.github.io/2016/12/10/创建Okhttp自定义Log">创建OkHttp自定义Log</a></p>
+<h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>本文重点讲解如何在使用OkHttp作为网络请求框架的前提下，如何自定义一个适合自己项目的Http Log，从而提升网络Api开发、调试效率。</p>
+<h1 id="Http协议"><a href="#Http协议" class="headerlink" title="Http协议"></a>Http协议</h1><p>只有对Http协议有基本的了解，才能更好的调试网络接口。</p>
+<h2 id="一个故事"><a href="#一个故事" class="headerlink" title="一个故事"></a>一个故事</h2><p>男女主一次偶然的机会，开始信件传情，但他们的信件并不是直接寄给对方，而是先寄到某个地点A，由地点A的主人转发。（好吧，这是《北京遇上西雅图之不二情书》的情节）。我们来看男主发信的过程：</p>
+<ol>
+<li>先购买有效邮票；</li>
+<li>填写信件的收件人、收件地址等信息；</li>
+<li>把信件放到信封里寄出去。</li>
+</ol>
+<p>显然，女主收到信后回复信件也是同样的流程。</p>
+<h2 id="类比"><a href="#类比" class="headerlink" title="类比"></a>类比</h2><p>我们现在将Http协议的消息结构和故事主人公收发信的过程做一个类比：<br><img src="/images/httplog_struct.png" alt="类比图"><br>下面是使用Fiddler工具抓取www.xitu.io的网络请求和响应图：<br><img src="/images/httplog_xitu.png" alt="稀土网络响应图"></p>
+<h2 id="Http消息结构"><a href="#Http消息结构" class="headerlink" title="Http消息结构"></a>Http消息结构</h2><p>由前面的分析可知，Http请求消息由三部分组成：</p>
+<ol>
+<li>请求行由3部分组成：①请求的方法,POST还是GET等；②请求路径；③Http协议</li>
+<li>请求头，每一行都是name:value的结构,包含各种来自请求客服端的信息</li>
+<li>请求体，提交给服务器的信息，GET方法没有此项。</li>
+</ol>
+<p>Http响应体跟请求体格式大致一样。</p>
+<ol>
+<li>请求体有协议和响应码组成，200为响应成功</li>
+<li>响应头，每一行都是name:value的结构,包含各种来自服务器的信息</li>
+<li>响应体，返回客户端需要的数据</li>
+</ol>
+<h1 id="自定义LogInterceptor"><a href="#自定义LogInterceptor" class="headerlink" title="自定义LogInterceptor"></a>自定义LogInterceptor</h1><h2 id="OkHttp-Interceptor"><a href="#OkHttp-Interceptor" class="headerlink" title="OkHttp Interceptor"></a>OkHttp Interceptor</h2><p>OkHttp的一大特点就是可以在发出请求体和收到响应体之间添加任意个数任意任意功能的拦截器，对请求体或者响应体进行操作。还是用《北京遇上西雅图之不二情书》的故事来说，那么地点A的主人就是充当拦截器的角色，在故事中他不仅转发信件，还阅读了信件的内容。</p>
+<h2 id="根据需求确定需要Log的信息"><a href="#根据需求确定需要Log的信息" class="headerlink" title="根据需求确定需要Log的信息"></a>根据需求确定需要Log的信息</h2><p>Log的信息和划分两类，一类是跟业务相关的信息，一类是与业务无关。</p>
+<ol>
+<li><p>业务相关包括：<br>请求地址url;<br>请求头：token、sessionId;<br>请求体：POST提交的内容;<br>响应头：token/sessionId;<br>响应体：服务器返回数据;</p>
+</li>
+<li><p>业务无关包括：<br>网络状态码：200为正常反应;<br>网络请求时间：从发出网络请求到响应所消耗的时间;<br>网络协议:http1、http2等;<br>网络Method：POST、GET等；<br>不管是业务相关的数据还是业务无关的数据，都是来自于Http<strong>请求体和响应体的消息结构</strong>中。</p>
+</li>
+</ol>
+<h2 id="Log效果图"><a href="#Log效果图" class="headerlink" title="Log效果图"></a>Log效果图</h2><p>以公司项目的测试服务器自动登录接口，log效果如下:</p>
+<pre><code class="java"> POST
+acid-&gt;<span class="number">1075</span>
+userId-&gt;-<span class="number">1</span>
+network code-&gt;<span class="number">200</span>
+url-&gt;http:<span class="comment">//mobileapi.app100688440.twsapp.com/app/open/open.do?ACID=1075&amp;userId=-1&amp;vendorId=7999&amp;VERS=6.5.1&amp;fromType=1110</span>
+time-&gt;<span class="number">84.473</span>
+request headers-&gt;sessionId: 
+request-&gt;{<span class="string">"data"</span>:{<span class="string">"pagenum"</span>:<span class="number">0</span>,<span class="string">"uid"</span>:-<span class="number">1</span>,<span class="string">"flag"</span>:<span class="string">"00000000"</span>},<span class="string">"requeststamp"</span>:<span class="string">"20161212151841836466"</span>}
+body-&gt;{<span class="string">"code"</span>:<span class="number">200</span>,<span class="string">"responsestamp"</span>:<span class="string">"20161212151841836466"</span>,<span class="string">"data"</span>:{<span class="string">"uid"</span>:-<span class="number">1</span>,<span class="string">"nickname"</span>:<span class="string">"游客258"</span>,<span class="string">"uploadUrl"</span>:<span class="string">"http://mobileapi.app100688440.twsapp.com/uploadservlet"</span>,<span class="string">"wxUrl"</span>:<span class="string">"http://wx.app100688440.twsapp.com"</span>,<span class="string">"isEmcee"</span>:<span class="number">0</span>,<span class="string">"canLive"</span>:<span class="number">0</span>,<span class="string">"goodnum"</span>:<span class="number">0</span>,<span class="string">"index"</span>:{},<span class="string">"revGift"</span>:{},<span class="string">"msgRemind"</span>:{},<span class="string">"freshmanMission"</span>:{},<span class="string">"account"</span>:{},<span class="string">"onlineLimit"</span>:<span class="string">"600"</span>,<span class="string">"userSecretKey"</span>:<span class="string">"brjefjzw37ocw46"</span>}}
+</code></pre>
+<p>log解释:<br>POST:此接口使用POST方法；<br>acid:标识此接口的id,每个接口有唯一的acid，根据acid可查询到此接口的功能，例如此接口acid = 1075为自动登录接口；<br>userId:用户id<br>network code:返回200证明服务器响应成功；<br>url：此接口请求的url地址；<br>time:为响应时间，如果某接口响应时间过长，排除网络环境的原因，就可以跟服务端商量是否可优化；<br>request header：此项目需要传sessionId;<br>request:此处打印Post方法的请求体，若后台返回参数错误，检查此行log即可；<br>body:后台数据返回，采用json格式；</p>
+<h2 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h2><pre><code class="java">
+<span class="comment">/**
+ * 添加Log
+ */</span>
+<span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">LogInterceptor</span> <span class="keyword">implements</span> <span class="title">Interceptor</span> </span>{
+
+    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String TAG = <span class="string">"LogInterceptor"</span>;
+    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Charset UTF8 = Charset.forName(<span class="string">"UTF-8"</span>); <span class="comment">//urf8编码</span>
+
+    <span class="meta">@Override</span>
+    <span class="function"><span class="keyword">public</span> Response <span class="title">intercept</span><span class="params">(Chain chain)</span> <span class="keyword">throws</span> IOException </span>{  <span class="comment">//实现Interceptor接口方法</span>
+        Log.d(TAG,<span class="string">"before chain,request()"</span>);
+        Request request = chain.request();  <span class="comment">//获取request</span>
+        String acid = request.url().queryParameter(<span class="string">"ACID"</span>); <span class="comment">//在url中获取ACID的参数值；</span>
+        Response response;
+        <span class="keyword">try</span> {
+            <span class="keyword">long</span> t1 = System.nanoTime();
+            response = chain.proceed(request); <span class="comment">//OkHttp链式调用</span>
+            <span class="keyword">long</span> t2 = System.nanoTime();
+            <span class="keyword">double</span> time = (t2 - t1) / <span class="number">1e6</span>d;   <span class="comment">//用请求后的时间减去请求前的时间得到耗时</span>
+
+            String userId = request.url().queryParameter(<span class="string">"userId"</span>);
+            String type = <span class="string">""</span>;
+            <span class="keyword">if</span> (request.method().equals(<span class="string">"GET"</span>)) {    <span class="comment">//判断Method类型</span>
+                type = <span class="string">"GET"</span>;
+            } <span class="keyword">else</span> <span class="keyword">if</span> (request.method().equals(<span class="string">"POST"</span>)) {
+                type = <span class="string">"POST"</span>;
+            } <span class="keyword">else</span> <span class="keyword">if</span> (request.method().equals(<span class="string">"PUT"</span>)) {
+                type = <span class="string">"PUT"</span>;
+            } <span class="keyword">else</span> <span class="keyword">if</span> (request.method().equals(<span class="string">"DELETE"</span>)) {
+                type = <span class="string">"DELETE"</span>;
+            }
+            BufferedSource source = response.body().source();
+            source.request(Long.MAX_VALUE); <span class="comment">// Buffer the entire body.</span>
+            Buffer buffer = source.buffer();
+            String logStr = <span class="string">"\n--------------------"</span>.concat(TextUtils.isEmpty(acid) ? <span class="string">""</span> : acid).concat(<span class="string">"  begin--------------------\n"</span>)
+                    .concat(type)
+                    .concat(<span class="string">"\nacid-&gt;"</span>).concat(TextUtils.isEmpty(acid) ? <span class="string">""</span> : acid)
+                    .concat(<span class="string">"\nuserId-&gt;"</span>).concat(TextUtils.isEmpty(userId) ? <span class="string">""</span> : userId)
+                    .concat(<span class="string">"\nnetwork code-&gt;"</span>).concat(response.code() + <span class="string">""</span>)
+                    .concat(<span class="string">"\nurl-&gt;"</span>).concat(request.url() + <span class="string">""</span>)
+                    .concat(<span class="string">"\ntime-&gt;"</span>).concat(time + <span class="string">""</span>)
+                    .concat(<span class="string">"\nrequest headers-&gt;"</span>).concat(request.headers() + <span class="string">""</span>)
+                    .concat(<span class="string">"request-&gt;"</span>).concat(bodyToString(request.body()))
+                    .concat(<span class="string">"\nbody-&gt;"</span>).concat(buffer.clone().readString(UTF8)); <span class="comment">//响应体转String</span>
+            Log.i(TAG, logStr);
+        } <span class="keyword">catch</span> (Exception e) {
+            Log.d(TAG,e.getClass().toString()+<span class="string">", error:acid = "</span>+acid);  <span class="comment">//网络出错，log 出错的acid</span>
+            <span class="keyword">throw</span> e; <span class="comment">//不拦截exception，由上层处理网络错误</span>
+        }
+        <span class="keyword">return</span> response;
+    }
+
+    <span class="comment">/**
+     * 请求体转String
+     * <span class="doctag">@param</span> request
+     * <span class="doctag">@return</span>
+     */</span>
+    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> String <span class="title">bodyToString</span><span class="params">(<span class="keyword">final</span> RequestBody request)</span> </span>{
+
+        <span class="keyword">try</span> {
+            <span class="keyword">final</span> Buffer buffer = <span class="keyword">new</span> Buffer();
+            request.writeTo(buffer);
+            <span class="keyword">return</span> buffer.readUtf8();
+        } <span class="keyword">catch</span> (<span class="keyword">final</span> IOException e) {
+            <span class="keyword">return</span> <span class="string">"did not work"</span>;
+        }
+    }
+
+}
+</code></pre>
+<h2 id="开源项目okhttp-logging-interceptor"><a href="#开源项目okhttp-logging-interceptor" class="headerlink" title="开源项目okhttp-logging-interceptor"></a>开源项目okhttp-logging-interceptor</h2><p>如果不想自己编写代码，也可以使用开源项目<a href="https://github.com/square/okhttp/tree/master/okhttp-logging-interceptor" target="_blank" rel="external">okhttp-logging-interceptor</a>，支持：1.设置Log的等级；2.使用自定义Log。此开源项目也仅是一个Interceptor。但个人觉得log的样式并不适合调试使用。同时log的内容比较通用，若想突出对应项目的信息，建议还是自定义Http Log。</p>
+<h2 id="Okhttp-Retrofit-Rxjava"><a href="#Okhttp-Retrofit-Rxjava" class="headerlink" title="Okhttp+Retrofit+Rxjava"></a>Okhttp+Retrofit+Rxjava</h2><p>此Interceptor配合OkHttp使用，关于Okhttp+Retrofit+Rxjava的整合，可查看<a href="https://yuanjunli.github.io/2016/11/26/rxjava+retrofit+OkHttp%E5%B0%81%E8%A3%85/" target="_blank" rel="external">RxJava+Retrofit+OkHttp封装</a></p>
+<h1 id="引用"><a href="#引用" class="headerlink" title="引用"></a>引用</h1><p><a href="https://github.com/square/okhttp/tree/master/okhttp-logging-interceptor" target="_blank" rel="external">okhttp-logging-interceptor</a><br><a href="https://github.com/square/okhttp/wiki/Interceptors" target="_blank" rel="external">okhttp Interceptors</a><br><a href="http://www.cnblogs.com/TankXiao/archive/2012/02/13/2342672.html" target="_blank" rel="external">Http协议详解</a></p>
+
       
     </div>
 
@@ -307,7 +439,7 @@
       
         <div class="post-tags">
           
-            <a href="/tags/Okhttp/" rel="tag">#Okhttp</a>
+            <a href="/tags/OkHttp/" rel="tag">#OkHttp</a>
           
             <a href="/tags/Log/" rel="tag">#Log</a>
           
@@ -350,8 +482,8 @@
           
   <div class="comments" id="comments">
     
-      <div class="ds-thread" data-thread-key="2016/12/10/创建Okhttp自定义log/"
-           data-title="创建Okhttp自定义log" data-url="http://yoursite.com/2016/12/10/创建Okhttp自定义log/">
+      <div class="ds-thread" data-thread-key="2016/12/10/创建OkHttp自定义Log/"
+           data-title="创建Okhttp自定义Log" data-url="http://yoursite.com/2016/12/10/创建OkHttp自定义Log/">
       </div>
     
   </div>
@@ -406,7 +538,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">14</span>
+                <span class="site-state-item-count">15</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
@@ -435,7 +567,7 @@
               
             
             
-              <p class="post-toc-empty">此文章未包含目录</p>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#背景"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Http协议"><span class="nav-number">2.</span> <span class="nav-text">Http协议</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#一个故事"><span class="nav-number">2.1.</span> <span class="nav-text">一个故事</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#类比"><span class="nav-number">2.2.</span> <span class="nav-text">类比</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Http消息结构"><span class="nav-number">2.3.</span> <span class="nav-text">Http消息结构</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#自定义LogInterceptor"><span class="nav-number">3.</span> <span class="nav-text">自定义LogInterceptor</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#OkHttp-Interceptor"><span class="nav-number">3.1.</span> <span class="nav-text">OkHttp Interceptor</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#根据需求确定需要Log的信息"><span class="nav-number">3.2.</span> <span class="nav-text">根据需求确定需要Log的信息</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Log效果图"><span class="nav-number">3.3.</span> <span class="nav-text">Log效果图</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#代码实现"><span class="nav-number">3.4.</span> <span class="nav-text">代码实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#开源项目okhttp-logging-interceptor"><span class="nav-number">3.5.</span> <span class="nav-text">开源项目okhttp-logging-interceptor</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Okhttp-Retrofit-Rxjava"><span class="nav-number">3.6.</span> <span class="nav-text">Okhttp+Retrofit+Rxjava</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#引用"><span class="nav-number">4.</span> <span class="nav-text">引用</span></a></li></ol></div>
             
           </div>
         </section>
