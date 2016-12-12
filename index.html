@@ -231,6 +231,115 @@
             
               
                 
+                <a class="post-title-link" href="/2016/12/10/创建Okhttp自定义log/" itemprop="url">
+                  创建Okhttp自定义log
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-12-10T14:15:27+08:00" content="2016-12-10">
+              2016-12-10
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/12/10/创建Okhttp自定义log/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/12/10/创建Okhttp自定义log/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/12/10/创建Okhttp自定义log/" class="leancloud_visitors" data-flag-title="创建Okhttp自定义log">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2016/11/26/rxjava+retrofit+OkHttp封装/" itemprop="url">
                   RxJava+Retrofit+OkHttp封装
                 </a>
@@ -305,7 +414,7 @@
 <li>封装错误处理，区分网络错误和应用层响应错误。 </li>
 </ol>
 <h1 id="优雅封装"><a href="#优雅封装" class="headerlink" title="优雅封装"></a>优雅封装</h1><h2 id="相互联系"><a href="#相互联系" class="headerlink" title="相互联系"></a>相互联系</h2><p>在三者的关系中，Retrofit主要负责将网络请求接口化，真正的网络请求和响应交给OkHttp，而RxJava在网络框架中扮演数据响应后进行数据处理的角色。做个简单比喻：假设用户需要从上海飞往北京中关村办事，需要办理登机、做飞机、到达北京后前往中关村。登机手续由Retrofit负责，真正的运输是由飞机(Okhttp)完成，客户到达（数据返回）选择交通工具（RtHttp）到达中关村。</p>
-<h2 id="设计图"><a href="#设计图" class="headerlink" title="设计图"></a>设计图</h2><p><img src="/images/rro_frame.png" alt="设计的框架图"><br>从设计图中可看出，RtHttp为网络请求总入口：<br>问题1、2交给Retrofit Builder模式解决；<br>问题3、4、5、6交给OkHttpClient的Builer解决；<br>问题7将封装到RtHttp类中；<br>问题8由BaseApi中的Observable Builder解决；<br>问题9由ApiSubscriber的OnError方法解决。</p>
+<h2 id="设计图"><a href="#设计图" class="headerlink" title="设计图"></a>设计图</h2><p><img src="https://yuanjunli.github.io/images/rro_frame.png" alt="设计的框架图"><br>从设计图中可看出，RtHttp为网络请求总入口：<br>问题1、2交给Retrofit Builder模式解决；<br>问题3、4、5、6交给OkHttpClient的Builer解决；<br>问题7将封装到RtHttp类中；<br>问题8由BaseApi中的Observable Builder解决；<br>问题9由ApiSubscriber的OnError方法解决。</p>
 <h2 id="设计代码"><a href="#设计代码" class="headerlink" title="设计代码"></a>设计代码</h2><h3 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h3><p>首先，我们来看封装后的网络请求使用：</p>
 <pre><code class="java">RtHttp.with(<span class="keyword">this</span>) <span class="comment">//设置Context</span>
                 .setShowWaitingDialog(<span class="keyword">true</span>) <span class="comment">//设置显示网络加载动画</span>
@@ -1909,7 +2018,7 @@ customer.startUp(iphone5Factory);
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">5</span>
+              <span class="site-state-item-count">6</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>

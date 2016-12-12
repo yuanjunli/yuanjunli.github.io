@@ -68,7 +68,7 @@
 <link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="Rxjava,Okhttp,Retrofit," />
+  <meta name="keywords" content="Rxjava,Retrofit,Okhttp," />
 
 
 
@@ -100,8 +100,8 @@ url地址中">
 支持切换网络请求地址，例如项目有分区功能，不同的分区对应不同的服务器地址
 服务器返回接口格式不一致，有的接口是返回json格式,有的返回String格式
 url地址中">
-<meta property="og:image" content="http://yoursite.com/images/rro_frame.png">
-<meta property="og:updated_time" content="2016-11-26T08:52:36.853Z">
+<meta property="og:image" content="https://yuanjunli.github.io/images/rro_frame.png">
+<meta property="og:updated_time" content="2016-11-26T09:14:19.669Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="RxJava+Retrofit+OkHttp封装">
 <meta name="twitter:description" content="原文链接：rxjava+retrofit+OkHttp封装
@@ -110,7 +110,7 @@ url地址中">
 支持切换网络请求地址，例如项目有分区功能，不同的分区对应不同的服务器地址
 服务器返回接口格式不一致，有的接口是返回json格式,有的返回String格式
 url地址中">
-<meta name="twitter:image" content="http://yoursite.com/images/rro_frame.png">
+<meta name="twitter:image" content="https://yuanjunli.github.io/images/rro_frame.png">
 
 
 
@@ -319,7 +319,7 @@ url地址中">
 <li>封装错误处理，区分网络错误和应用层响应错误。 </li>
 </ol>
 <h1 id="优雅封装"><a href="#优雅封装" class="headerlink" title="优雅封装"></a>优雅封装</h1><h2 id="相互联系"><a href="#相互联系" class="headerlink" title="相互联系"></a>相互联系</h2><p>在三者的关系中，Retrofit主要负责将网络请求接口化，真正的网络请求和响应交给OkHttp，而RxJava在网络框架中扮演数据响应后进行数据处理的角色。做个简单比喻：假设用户需要从上海飞往北京中关村办事，需要办理登机、做飞机、到达北京后前往中关村。登机手续由Retrofit负责，真正的运输是由飞机(Okhttp)完成，客户到达（数据返回）选择交通工具（RtHttp）到达中关村。</p>
-<h2 id="设计图"><a href="#设计图" class="headerlink" title="设计图"></a>设计图</h2><p><img src="/images/rro_frame.png" alt="设计的框架图"><br>从设计图中可看出，RtHttp为网络请求总入口：<br>问题1、2交给Retrofit Builder模式解决；<br>问题3、4、5、6交给OkHttpClient的Builer解决；<br>问题7将封装到RtHttp类中；<br>问题8由BaseApi中的Observable Builder解决；<br>问题9由ApiSubscriber的OnError方法解决。</p>
+<h2 id="设计图"><a href="#设计图" class="headerlink" title="设计图"></a>设计图</h2><p><img src="https://yuanjunli.github.io/images/rro_frame.png" alt="设计的框架图"><br>从设计图中可看出，RtHttp为网络请求总入口：<br>问题1、2交给Retrofit Builder模式解决；<br>问题3、4、5、6交给OkHttpClient的Builer解决；<br>问题7将封装到RtHttp类中；<br>问题8由BaseApi中的Observable Builder解决；<br>问题9由ApiSubscriber的OnError方法解决。</p>
 <h2 id="设计代码"><a href="#设计代码" class="headerlink" title="设计代码"></a>设计代码</h2><h3 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h3><p>首先，我们来看封装后的网络请求使用：</p>
 <pre><code class="java">RtHttp.with(<span class="keyword">this</span>) <span class="comment">//设置Context</span>
                 .setShowWaitingDialog(<span class="keyword">true</span>) <span class="comment">//设置显示网络加载动画</span>
@@ -973,9 +973,9 @@ url地址中">
           
             <a href="/tags/Rxjava/" rel="tag">#Rxjava</a>
           
-            <a href="/tags/Okhttp/" rel="tag">#Okhttp</a>
-          
             <a href="/tags/Retrofit/" rel="tag">#Retrofit</a>
+          
+            <a href="/tags/Okhttp/" rel="tag">#Okhttp</a>
           
         </div>
       
@@ -991,6 +991,10 @@ url地址中">
           </div>
 
           <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/12/10/创建Okhttp自定义log/" rel="prev" title="创建Okhttp自定义log">
+                创建Okhttp自定义log <i class="fa fa-chevron-right"></i>
+              </a>
             
           </div>
         </div>
@@ -1062,7 +1066,7 @@ url地址中">
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">5</span>
+              <span class="site-state-item-count">6</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
