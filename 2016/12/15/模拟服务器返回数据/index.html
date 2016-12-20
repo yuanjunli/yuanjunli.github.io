@@ -1,0 +1,784 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="OkHttp,Http," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.2" />
+
+
+
+
+
+
+<meta name="description" content="背景模拟服务器返回的数据，在以下场景具有实际意义：
+
+和服务器开发协商好开发接口，但服务器API尚未部署，想接口定义好就进行开发；服务器已部署，返回的数据不能测试到各种情况，希望返回期待数据测试边界情况；
+
+如果客户端开发人员能不走服务器，通过模拟数据返回，能提升开发效率和程序质量。
+实现思路本文主要讲解两种实现方式：
+
+使用网络分析工具拦截客户端请求，并返回伪造数据。优点：无需改变客户端代码；不">
+<meta property="og:type" content="article">
+<meta property="og:title" content="模拟服务器返回数据">
+<meta property="og:url" content="http://yoursite.com/2016/12/15/模拟服务器返回数据/index.html">
+<meta property="og:site_name" content="NEXTB">
+<meta property="og:description" content="背景模拟服务器返回的数据，在以下场景具有实际意义：
+
+和服务器开发协商好开发接口，但服务器API尚未部署，想接口定义好就进行开发；服务器已部署，返回的数据不能测试到各种情况，希望返回期待数据测试边界情况；
+
+如果客户端开发人员能不走服务器，通过模拟数据返回，能提升开发效率和程序质量。
+实现思路本文主要讲解两种实现方式：
+
+使用网络分析工具拦截客户端请求，并返回伪造数据。优点：无需改变客户端代码；不">
+<meta property="og:image" content="http://yoursite.com/images/mock_charles.png">
+<meta property="og:image" content="http://yoursite.com/images/mock_mocky.png">
+<meta property="og:image" content="http://yoursite.com/images/mock_mapping.png">
+<meta property="og:image" content="http://yoursite.com/images/mock_success.png">
+<meta property="og:image" content="http://yoursite.com/images/mock_interceptor.png">
+<meta property="og:updated_time" content="2016-12-20T13:08:29.183Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="模拟服务器返回数据">
+<meta name="twitter:description" content="背景模拟服务器返回的数据，在以下场景具有实际意义：
+
+和服务器开发协商好开发接口，但服务器API尚未部署，想接口定义好就进行开发；服务器已部署，返回的数据不能测试到各种情况，希望返回期待数据测试边界情况；
+
+如果客户端开发人员能不走服务器，通过模拟数据返回，能提升开发效率和程序质量。
+实现思路本文主要讲解两种实现方式：
+
+使用网络分析工具拦截客户端请求，并返回伪造数据。优点：无需改变客户端代码；不">
+<meta name="twitter:image" content="http://yoursite.com/images/mock_charles.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/12/15/模拟服务器返回数据/"/>
+
+
+  <title> 模拟服务器返回数据 | NEXTB </title>
+</head>
+
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">NEXTB</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                模拟服务器返回数据
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-12-15T16:35:50+08:00" content="2016-12-15">
+              2016-12-15
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/12/15/模拟服务器返回数据/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/12/15/模拟服务器返回数据/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/12/15/模拟服务器返回数据/" class="leancloud_visitors" data-flag-title="模拟服务器返回数据">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>模拟服务器返回的数据，在以下场景具有实际意义：</p>
+<blockquote>
+<p>和服务器开发协商好开发接口，但服务器API尚未部署，想接口定义好就进行开发；<br>服务器已部署，返回的数据不能测试到各种情况，希望返回期待数据测试边界情况；</p>
+</blockquote>
+<p>如果客户端开发人员能不走服务器，通过模拟数据返回，能提升开发效率和程序质量。</p>
+<h1 id="实现思路"><a href="#实现思路" class="headerlink" title="实现思路"></a>实现思路</h1><p>本文主要讲解两种实现方式：</p>
+<ol>
+<li><p>使用网络分析工具拦截客户端请求，并返回伪造数据。<br>优点：无需改变客户端代码；不依赖客户端平台，android和ios都通用；<br>缺点：依赖网络分析工具；调试相对不灵活；</p>
+</li>
+<li><p>使用客户端网络框架拦截请求并返回。<br>优点：返回数据由客户端代码决定，灵活易于调试；<br>缺点：需要改变客户端代码；需要根据客户端网络框架进行响应处理，不同的网络框架处理不一样；</p>
+</li>
+</ol>
+<p>对于方案一，主要使用网络分析工具Charles进行拦截并返回，对于方案二，主要讲解使用OkHttp作为网络框架，利用拦截器机制实现模拟返回。</p>
+<h1 id="使用Charles模拟数据"><a href="#使用Charles模拟数据" class="headerlink" title="使用Charles模拟数据"></a>使用Charles模拟数据</h1><h2 id="准备条件"><a href="#准备条件" class="headerlink" title="准备条件"></a>准备条件</h2><ol>
+<li>客户端需要连接到和电脑同一个网络(手机连接电脑发出的wifi)</li>
+<li><a href="https://www.charlesproxy.com/download/" target="_blank" rel="external">官网安装charles程序</a></li>
+</ol>
+<h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><p>配置方法参考<a href="http://shinelw.com/2016/04/21/about-charles/" target="_blank" rel="external">Charles:移动端设备网络抓包</a><br>完成配置后，可以在Charles中检测到手机的网络请求和响应。</p>
+<h2 id="转接服务器地址"><a href="#转接服务器地址" class="headerlink" title="转接服务器地址"></a>转接服务器地址</h2><p><img src="/images/mock_charles.png" alt="Charles 拦截ip地址"><br>转接服务器地址是指，当客户端请求地址B时，本应该向指定的服务器请求数据，但Charles可拦截此ip地址，使不向服务器地址请求，并且返回另外一台服务器模拟的数据。<br>首先，我们来生成模拟返回数据的api接口；<br>打开<a href="http://www.mocky.io/" target="_blank" rel="external">mocky网址</a>,输入想伪造Body数据，点击<strong>Generate my HTTP Response</strong>按钮生成http的url地址。<br><img src="/images/mock_mocky.png" alt="mocky生成模拟地址"><br>如图，当点击<a href="http://www.mocky.io/v2/58592298240000ba087c5a92" target="_blank" rel="external">http://www.mocky.io/v2/58592298240000ba087c5a92</a> 时，返回json格式的数据。<br>有了模拟数据的api地址，接着设置需要模拟的api接口。经过配置后，Charles可检测手机的网络请求，选择需要模拟返回数据的网络请求接口，<strong>右键</strong>选择<strong>Map Remote…</strong><br>Map From为需要拦截的接口，Map To为模拟的api接口，此处我们填入<strong><a href="http://www.mocky.io/v2/58592298240000ba087c5a92" target="_blank" rel="external">http://www.mocky.io/v2/58592298240000ba087c5a92</a></strong>，如下图：<br><img src="/images/mock_mapping.png" alt="Charles 拦截ip地址"><br>选择标题栏<strong>Tool工具图标</strong>，取消选择<strong>Map Remote</strong>,再勾选<strong>Map Remote</strong>，让设置的ip地址生效。此时，当客户端请求原地址时，都会返回模拟ip地址的数据，效果图如下：<br><img src="/images/mock_success.png" alt="Charles 拦截ip地址"></p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>以上，使用Mocky网络和Charles工具实现模拟数据返回，无需改变客户端原有代码，但是，当需要改变客户端返回的数据时，则需要重新生成http模拟地址，再次设置Charles <strong>Map to</strong>内容。</p>
+<h1 id="自定义OkHttp-Interceptor模拟返回"><a href="#自定义OkHttp-Interceptor模拟返回" class="headerlink" title="自定义OkHttp Interceptor模拟返回"></a>自定义OkHttp Interceptor模拟返回</h1><p>以下内容假设用户掌握OkHttp的简单使用，重点讲解自定义OkHttpInterceptor模拟返回数据。</p>
+<h2 id="OkHttp拦截器"><a href="#OkHttp拦截器" class="headerlink" title="OkHttp拦截器"></a>OkHttp拦截器</h2><p><img src="/images/mock_interceptor.png" alt="Charles 拦截ip地址"><br>如图，OkHttp可在Request和Response中设置任意个数的Intercepor(图中用圆圈标识)，对请求体和响应体进行处理。借助OkHttp Interceptor机制，创建一个MockIntercepor,模拟返回一个Response,虚线部分为模拟的Response。</p>
+<h2 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h2><p>MockInterceptor代码如下：</p>
+<pre><code class="java"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MockInterceptor</span> <span class="keyword">implements</span> <span class="title">Interceptor</span></span>{
+    <span class="meta">@Override</span>
+    <span class="function"><span class="keyword">public</span> Response <span class="title">intercept</span><span class="params">(Chain chain)</span> <span class="keyword">throws</span> IOException </span>{
+        Gson gson = <span class="keyword">new</span> Gson();
+        Response response = <span class="keyword">null</span>;
+        Response.Builder responseBuilder = <span class="keyword">new</span> Response.Builder()
+                .code(<span class="number">200</span>)
+                .message(<span class="string">""</span>)
+                .request(chain.request())
+                .protocol(Protocol.HTTP_1_0)
+                .addHeader(<span class="string">"content-type"</span>, <span class="string">"application/json"</span>);
+        Request request = chain.request();
+        <span class="keyword">if</span>(request.url().equals(<span class="string">"http://url_whitch_need_to_mock"</span>)) { <span class="comment">//拦截指定地址</span>
+            String responseString = <span class="string">"{\n"</span> +    <span class="comment">//模拟数据返回body</span>
+                    <span class="string">"\t\"code\": 200,\n"</span> +
+                    <span class="string">"\t\"message\": \"success\",\n"</span> +
+                    <span class="string">"\t\"data\": {}\n"</span> +
+                    <span class="string">"}"</span>;
+            responseBuilder.body(ResponseBody.create(MediaType.parse(<span class="string">"application/json"</span>), responseString.getBytes()));<span class="comment">//将数据设置到body中</span>
+            response = responseBuilder.build(); <span class="comment">//builder模式构建response</span>
+        }<span class="keyword">else</span>{
+            response = chain.proceed(request);
+        }
+        <span class="keyword">return</span> response;
+    }
+}
+</code></pre>
+<p>在debug模式下，将此Interceptor添加到网络请求的OkHttp中，即可对指定的api地址进行拦截，并且返回特定的数据。</p>
+<h2 id="小结-1"><a href="#小结-1" class="headerlink" title="小结"></a>小结</h2><p>使用OkHttp的拦截机制，可实现改变部分代码则可模拟返回数据，返回的数据可在代码中设置，可使用工厂模式将模拟数据的生成变动代码放到Factory中。依赖网络请求框架，若原项目使用OkHttp或Retrofit作为网络框架,可轻易实现模拟接口。</p>
+<h1 id="引用"><a href="#引用" class="headerlink" title="引用"></a>引用</h1><blockquote>
+<p><a href="http://shinelw.com/2016/04/21/about-charles/" target="_blank" rel="external">Charles:移动端设备网络抓包</a><br><a href="http://blog.csdn.net/guijiaoba/article/details/43198503" target="_blank" rel="external">利用charles模拟Http请求和响应</a><br><a href="http://www.println.net/post/Android-Hack-Retrofit-Mock-Server" target="_blank" rel="external">Hack Retrofit (2) 之 Mock Server</a><br><a href="https://github.com/square/okhttp/wiki/Interceptors" target="_blank" rel="external">OkHttp Interceptor</a></p>
+</blockquote>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/OkHttp/" rel="tag">#OkHttp</a>
+          
+            <a href="/tags/Http/" rel="tag">#Http</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/12/10/创建OkHttp自定义Log/" rel="next" title="创建OkHttp自定义Log">
+                <i class="fa fa-chevron-left"></i> 创建OkHttp自定义Log
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/12/15/模拟服务器返回数据/"
+           data-title="模拟服务器返回数据" data-url="http://yoursite.com/2016/12/15/模拟服务器返回数据/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.jpg"
+               alt="NEXT" />
+          <p class="site-author-name" itemprop="name">NEXT</p>
+          <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">7</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">16</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#背景"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#实现思路"><span class="nav-number">2.</span> <span class="nav-text">实现思路</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#使用Charles模拟数据"><span class="nav-number">3.</span> <span class="nav-text">使用Charles模拟数据</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#准备条件"><span class="nav-number">3.1.</span> <span class="nav-text">准备条件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#配置"><span class="nav-number">3.2.</span> <span class="nav-text">配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#转接服务器地址"><span class="nav-number">3.3.</span> <span class="nav-text">转接服务器地址</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#小结"><span class="nav-number">3.4.</span> <span class="nav-text">小结</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#自定义OkHttp-Interceptor模拟返回"><span class="nav-number">4.</span> <span class="nav-text">自定义OkHttp Interceptor模拟返回</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#OkHttp拦截器"><span class="nav-number">4.1.</span> <span class="nav-text">OkHttp拦截器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#代码实现"><span class="nav-number">4.2.</span> <span class="nav-text">代码实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#小结-1"><span class="nav-number">4.3.</span> <span class="nav-text">小结</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#引用"><span class="nav-number">5.</span> <span class="nav-text">引用</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">NEXT</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"nextb"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/lib/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("HOe9TkPiadv0Afw5jGl0gEuC-gzGzoHsz", "uPWanKlo8K6iWVB1KIajxCgk");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+</body>
+</html>
