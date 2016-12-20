@@ -291,7 +291,8 @@
       
         
           
-            <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>模拟服务器返回的数据，在以下场景具有实际意义：</p>
+            <p>原文链接：<a href="https://yuanjunli.github.io/2016/12/15/%E6%A8%A1%E6%8B%9F%E6%9C%8D%E5%8A%A1%E5%99%A8%E8%BF%94%E5%9B%9E%E6%95%B0%E6%8D%AE/" target="_blank" rel="external">模拟服务器返回数据</a></p>
+<h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>模拟服务器返回的数据，在以下场景具有实际意义：</p>
 <blockquote>
 <p>和服务器开发协商好开发接口，但服务器API尚未部署，想接口定义好就进行开发；<br>服务器已部署，返回的数据不能测试到各种情况，希望返回期待数据测试边界情况；</p>
 </blockquote>
@@ -306,13 +307,13 @@
 <p>对于方案一，主要使用网络分析工具Charles进行拦截并返回，对于方案二，主要讲解使用OkHttp作为网络框架，利用拦截器机制实现模拟返回。</p>
 <h1 id="使用Charles模拟数据"><a href="#使用Charles模拟数据" class="headerlink" title="使用Charles模拟数据"></a>使用Charles模拟数据</h1><h2 id="准备条件"><a href="#准备条件" class="headerlink" title="准备条件"></a>准备条件</h2><ol>
 <li>客户端需要连接到和电脑同一个网络(手机连接电脑发出的wifi)</li>
-<li><a href="https://www.charlesproxy.com/download/" target="_blank" rel="external">官网安装charles程序</a></li>
+<li><a href="https://www.charlesproxy.com/download/" target="_blank" rel="external">官网下载安装</a></li>
 </ol>
 <h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><p>配置方法参考<a href="http://shinelw.com/2016/04/21/about-charles/" target="_blank" rel="external">Charles:移动端设备网络抓包</a><br>完成配置后，可以在Charles中检测到手机的网络请求和响应。</p>
-<h2 id="转接服务器地址"><a href="#转接服务器地址" class="headerlink" title="转接服务器地址"></a>转接服务器地址</h2><p><img src="/images/mock_charles.png" alt="Charles 拦截ip地址"><br>转接服务器地址是指，当客户端请求地址B时，本应该向指定的服务器请求数据，但Charles可拦截此ip地址，使不向服务器地址请求，并且返回另外一台服务器模拟的数据。<br>首先，我们来生成模拟返回数据的api接口；<br>打开<a href="http://www.mocky.io/" target="_blank" rel="external">mocky网址</a>,输入想伪造Body数据，点击<strong>Generate my HTTP Response</strong>按钮生成http的url地址。<br><img src="/images/mock_mocky.png" alt="mocky生成模拟地址"><br>如图，当点击<a href="http://www.mocky.io/v2/58592298240000ba087c5a92" target="_blank" rel="external">http://www.mocky.io/v2/58592298240000ba087c5a92</a> 时，返回json格式的数据。<br>有了模拟数据的api地址，接着设置需要模拟的api接口。经过配置后，Charles可检测手机的网络请求，选择需要模拟返回数据的网络请求接口，<strong>右键</strong>选择<strong>Map Remote…</strong><br>Map From为需要拦截的接口，Map To为模拟的api接口，此处我们填入<strong><a href="http://www.mocky.io/v2/58592298240000ba087c5a92" target="_blank" rel="external">http://www.mocky.io/v2/58592298240000ba087c5a92</a></strong>，如下图：<br><img src="/images/mock_mapping.png" alt="Charles 拦截ip地址"><br>选择标题栏<strong>Tool工具图标</strong>，取消选择<strong>Map Remote</strong>,再勾选<strong>Map Remote</strong>，让设置的ip地址生效。此时，当客户端请求原地址时，都会返回模拟ip地址的数据，效果图如下：<br><img src="/images/mock_success.png" alt="Charles 拦截ip地址"></p>
+<h2 id="转接服务器地址"><a href="#转接服务器地址" class="headerlink" title="转接服务器地址"></a>转接服务器地址</h2><p><img src="https://yuanjunli.github.io/images/mock_charles.png" alt="Charles 拦截原理"><br>转接服务器地址是指，当客户端请求地址B时，本应该向指定的服务器请求数据，但Charles可拦截此ip地址，使不向服务器地址请求，并且返回另外一台服务器模拟的数据。<br>首先，我们来生成模拟返回数据的api接口；<br>打开<a href="http://www.mocky.io/" target="_blank" rel="external">mocky网址</a>,输入想伪造Body数据，点击<strong>Generate my HTTP Response</strong>按钮生成http的url地址。<br><img src="https://yuanjunli.github.io/images/mock_mocky.png" alt="mocky生成模拟地址"><br>如图，当点击<a href="http://www.mocky.io/v2/58592298240000ba087c5a92" target="_blank" rel="external">http://www.mocky.io/v2/58592298240000ba087c5a92</a> 时，返回json格式的数据。<br>有了模拟数据的api地址，接着设置需要模拟的api接口。经过配置后，Charles可检测手机的网络请求，选择需要模拟返回数据的网络请求接口，<strong>右键</strong>选择<strong>Map Remote…</strong><br>Map From为需要拦截的接口，Map To为模拟的api接口，此处我们填入<strong><a href="http://www.mocky.io/v2/58592298240000ba087c5a92" target="_blank" rel="external">http://www.mocky.io/v2/58592298240000ba087c5a92</a></strong>，如下图：<br><img src="https://yuanjunli.github.io/images/mock_mapping.png" alt="Charles 拦截ip地址"><br>选择标题栏<strong>Tool工具图标</strong>，取消选择<strong>Map Remote</strong>,再勾选<strong>Map Remote</strong>，让设置的ip地址生效。此时，当客户端请求原地址时，都会返回模拟ip地址的数据，效果图如下：<br><img src="https://yuanjunli.github.io/images/mock_success.png" alt="Charles 返回模拟数据"></p>
 <h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>以上，使用Mocky网络和Charles工具实现模拟数据返回，无需改变客户端原有代码，但是，当需要改变客户端返回的数据时，则需要重新生成http模拟地址，再次设置Charles <strong>Map to</strong>内容。</p>
 <h1 id="自定义OkHttp-Interceptor模拟返回"><a href="#自定义OkHttp-Interceptor模拟返回" class="headerlink" title="自定义OkHttp Interceptor模拟返回"></a>自定义OkHttp Interceptor模拟返回</h1><p>以下内容假设用户掌握OkHttp的简单使用，重点讲解自定义OkHttpInterceptor模拟返回数据。</p>
-<h2 id="OkHttp拦截器"><a href="#OkHttp拦截器" class="headerlink" title="OkHttp拦截器"></a>OkHttp拦截器</h2><p><img src="/images/mock_interceptor.png" alt="Charles 拦截ip地址"><br>如图，OkHttp可在Request和Response中设置任意个数的Intercepor(图中用圆圈标识)，对请求体和响应体进行处理。借助OkHttp Interceptor机制，创建一个MockIntercepor,模拟返回一个Response,虚线部分为模拟的Response。</p>
+<h2 id="OkHttp拦截器"><a href="#OkHttp拦截器" class="headerlink" title="OkHttp拦截器"></a>OkHttp拦截器</h2><p><img src="https://yuanjunli.github.io/images/mock_interceptor.png" alt="OkHttp 拦截器"><br>如图，OkHttp可在Request和Response中设置任意个数的Intercepor(图中用圆圈标识)，对请求体和响应体进行处理。借助OkHttp Interceptor机制，创建一个MockIntercepor,模拟返回一个Response,虚线部分为模拟的Response。</p>
 <h2 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h2><p>MockInterceptor代码如下：</p>
 <pre><code class="java"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MockInterceptor</span> <span class="keyword">implements</span> <span class="title">Interceptor</span></span>{
     <span class="meta">@Override</span>
@@ -2309,7 +2310,7 @@ customer.startUp(iphone5Factory);
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">16</span>
+                <span class="site-state-item-count">15</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
