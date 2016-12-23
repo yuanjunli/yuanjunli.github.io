@@ -291,7 +291,8 @@
       
         
           
-            <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>年底了，看友盟的bug列表，发现<strong>java.lang.OutOfMemoryError</strong>的问题不少，也该是时候还了。</p>
+            <p>原文链接：<a href="https://yuanjunli.github.io/2016/12/23/%E9%80%81%E4%B8%80%E4%B8%AA%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F%E7%BB%992016%E7%9A%84%E8%AE%B0%E5%87%A0/" target="_blank" rel="external">送一个内存泄漏给2016的记几</a></p>
+<h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>年底了，看公司项目的友盟的bug列表，发现<strong>java.lang.OutOfMemoryError</strong>的问题不少，也该是时候还了。</p>
 <h1 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h1><p>在解决内存泄漏的过程中，遇到一个静态变量导致的内存泄漏，关键是这代码还是自己敲的，明明已经使用弱引用，为什么还是内存泄漏了。看代码：</p>
 <pre><code class="java"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">RtHttp</span> </span>{
 
@@ -307,10 +308,10 @@
 <p>RtHttp为封装客户端网络框架请求的入口，假设两个条件：</p>
 <ol>
 <li>其中传入的Context对象只能是Activity，不能使用context.getApplicationContext()（因为此RtHttp还封装了显示网络加载对话框的代码）。</li>
-<li>不能在Activity onDestroy()方法中调用RtHttp.instance.context = null;<br>已经使用了弱引用，为什么还是内存泄漏呢？</li>
+<li>不能在Activity onDestroy()方法中调用RtHttp.instance.context = null;</li>
 </ol>
-<p>记几想不通，还到谷歌搜索<strong>使用弱引用依然内存泄漏</strong>，<strong>WeakReference useless</strong>,无果。</p>
-<p><img src="/images/leak_despise.jpg" alt="new Module..."><br>如果你已经看出问题了，请直接到评论吐槽。<br>如果你没看出问题，请把引用的文章看一遍。</p>
+<p>已经使用了弱引用，为什么还是内存泄漏呢？<br>记几想不通，还到谷歌搜索<strong>使用弱引用依然内存泄漏</strong>，<strong>WeakReference useless</strong>,无果。</p>
+<p><img src="https://yuanjunli.github.io/images/leak_despise.jpg" alt="鄙视脸"><br>如果你已经看出问题了，请直接到评论吐槽。<br>如果你没看出问题，请把引用的文章看一遍。</p>
 <h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>一个内存泄漏的问题，反映了Java基础不牢固，在学习知识和解决问题上也不够深入。一直想写一篇2016的总结，希望以此内存泄漏的问题为界，实现在2017的一个技术提升。</p>
 <h1 id="引用"><a href="#引用" class="headerlink" title="引用"></a>引用</h1><blockquote>
 <p><a href="https://yq.aliyun.com/articles/3009" target="_blank" rel="external">Android 内存泄漏总结</a><br><a href="http://www.jianshu.com/p/66fecc0f97e6" target="_blank" rel="external">Java内存、Android 内存泄漏</a><br><a href="http://www.jianshu.com/p/214e42fc0d37" target="_blank" rel="external">Java gc(垃圾回收机制)小结，以及Android优化建议</a><br><a href="http://www.jianshu.com/p/4a09a51d208c" target="_blank" rel="external">JVM GC垃圾回收机制</a></p>
