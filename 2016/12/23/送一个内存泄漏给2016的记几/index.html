@@ -68,7 +68,7 @@
 <link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="Hexo, NexT" />
+  <meta name="keywords" content="内存泄漏，Leakcanary，单例模式," />
 
 
 
@@ -84,12 +84,30 @@
 
 
 
-<meta property="og:type" content="website">
-<meta property="og:title" content="NEXTB">
-<meta property="og:url" content="http://yoursite.com/archives/2016/index.html">
+<meta name="description" content="背景年底了，看友盟的bug列表，发现java.lang.OutOfMemoryError的问题不少，也该是时候还了。
+问题描述在解决内存泄漏的过程中，遇到一个静态变量导致的内存泄漏，关键是这代码还是自己敲的，明明已经使用弱引用，为什么还是内存泄漏了。看代码：
+public class RtHttp {
+
+    public static RtHttp instance = new RtHttp(">
+<meta property="og:type" content="article">
+<meta property="og:title" content="送一个内存泄漏给2016的记几">
+<meta property="og:url" content="http://yoursite.com/2016/12/23/送一个内存泄漏给2016的记几/index.html">
 <meta property="og:site_name" content="NEXTB">
+<meta property="og:description" content="背景年底了，看友盟的bug列表，发现java.lang.OutOfMemoryError的问题不少，也该是时候还了。
+问题描述在解决内存泄漏的过程中，遇到一个静态变量导致的内存泄漏，关键是这代码还是自己敲的，明明已经使用弱引用，为什么还是内存泄漏了。看代码：
+public class RtHttp {
+
+    public static RtHttp instance = new RtHttp(">
+<meta property="og:image" content="http://yoursite.com/images/leak_despise.jpg">
+<meta property="og:updated_time" content="2016-12-23T12:53:32.943Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="NEXTB">
+<meta name="twitter:title" content="送一个内存泄漏给2016的记几">
+<meta name="twitter:description" content="背景年底了，看友盟的bug列表，发现java.lang.OutOfMemoryError的问题不少，也该是时候还了。
+问题描述在解决内存泄漏的过程中，遇到一个静态变量导致的内存泄漏，关键是这代码还是自己敲的，明明已经使用弱引用，为什么还是内存泄漏了。看代码：
+public class RtHttp {
+
+    public static RtHttp instance = new RtHttp(">
+<meta name="twitter:image" content="http://yoursite.com/images/leak_despise.jpg">
 
 
 
@@ -110,10 +128,10 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/archives/2016/"/>
+  <link rel="canonical" href="http://yoursite.com/2016/12/23/送一个内存泄漏给2016的记几/"/>
 
 
-  <title> 归档 | NEXTB </title>
+  <title> 送一个内存泄漏给2016的记几 | NEXTB </title>
 </head>
 
 
@@ -135,7 +153,7 @@
     
   
 
-  <div class="container one-collumn sidebar-position-left  page-archive  ">
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
@@ -207,325 +225,161 @@
           <div id="content" class="content">
             
 
-  <section id="posts" class="posts-collapse">
-    <span class="archive-move-on"></span>
-
-    <span class="archive-page-counter">
-      
-      
-      
-        
-      
-      嗯..! 目前共计 8 篇日志。 继续努力。
-    </span>
-
+  <div id="posts" class="posts-expand">
     
-
-      
-      
-      
-
-      
-        
-        <div class="collection-title">
-          <h2 class="archive-year motion-element" id="archive-year-2016">2016</h2>
-        </div>
-      
-      
-
-      
-
-  <article class="post post-type-normal" itemscope itemtype="//schema.org/Article">
-    <header class="post-header">
-
-      <h1 class="post-title">
-        
-            <a class="post-title-link" href="/2016/12/23/送一个内存泄漏给2016的记几/" itemprop="url">
-              
-                <span itemprop="name">送一个内存泄漏给2016的记几</span>
-              
-            </a>
-        
-      </h1>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2016-12-23T19:35:47+08:00"
-              content="2016-12-23" >
-          12-23
-        </time>
-      </div>
-
-    </header>
-  </article>
-
-
-
-    
-
-      
-      
-      
-
-      
-      
-
-      
-
-  <article class="post post-type-normal" itemscope itemtype="//schema.org/Article">
-    <header class="post-header">
-
-      <h1 class="post-title">
-        
-            <a class="post-title-link" href="/2016/12/15/模拟服务器返回数据/" itemprop="url">
-              
-                <span itemprop="name">模拟服务器返回数据</span>
-              
-            </a>
-        
-      </h1>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2016-12-15T16:35:50+08:00"
-              content="2016-12-15" >
-          12-15
-        </time>
-      </div>
-
-    </header>
-  </article>
-
-
-
-    
-
-      
-      
-      
-
-      
-      
-
-      
-
-  <article class="post post-type-normal" itemscope itemtype="//schema.org/Article">
-    <header class="post-header">
-
-      <h1 class="post-title">
-        
-            <a class="post-title-link" href="/2016/12/10/创建OkHttp自定义Log/" itemprop="url">
-              
-                <span itemprop="name">创建OkHttp自定义Log</span>
-              
-            </a>
-        
-      </h1>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2016-12-10T14:15:27+08:00"
-              content="2016-12-10" >
-          12-10
-        </time>
-      </div>
-
-    </header>
-  </article>
-
-
-
-    
-
-      
-      
-      
-
-      
-      
-
-      
-
-  <article class="post post-type-normal" itemscope itemtype="//schema.org/Article">
-    <header class="post-header">
-
-      <h1 class="post-title">
-        
-            <a class="post-title-link" href="/2016/11/26/rxjava+retrofit+OkHttp封装/" itemprop="url">
-              
-                <span itemprop="name">RxJava+Retrofit+OkHttp封装</span>
-              
-            </a>
-        
-      </h1>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2016-11-26T13:22:07+08:00"
-              content="2016-11-26" >
-          11-26
-        </time>
-      </div>
-
-    </header>
-  </article>
-
-
-
-    
-
-      
-      
-      
-
-      
-      
-
-      
-
-  <article class="post post-type-normal" itemscope itemtype="//schema.org/Article">
-    <header class="post-header">
-
-      <h1 class="post-title">
-        
-            <a class="post-title-link" href="/2016/11/09/不是学习工厂模式最简单的指南/" itemprop="url">
-              
-                <span itemprop="name">不是学习工厂模式最简单的指南</span>
-              
-            </a>
-        
-      </h1>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2016-11-09T09:53:29+08:00"
-              content="2016-11-09" >
-          11-09
-        </time>
-      </div>
-
-    </header>
-  </article>
-
-
-
-    
-
-      
-      
-      
-
-      
-      
-
-      
-
-  <article class="post post-type-normal" itemscope itemtype="//schema.org/Article">
-    <header class="post-header">
-
-      <h1 class="post-title">
-        
-            <a class="post-title-link" href="/2016/10/19/annotation/" itemprop="url">
-              
-                <span itemprop="name">Android编译时注解实践指南</span>
-              
-            </a>
-        
-      </h1>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2016-10-19T17:32:05+08:00"
-              content="2016-10-19" >
-          10-19
-        </time>
-      </div>
-
-    </header>
-  </article>
-
-
-
-    
-
-      
-      
-      
-
-      
-      
-
-      
-
-  <article class="post post-type-normal" itemscope itemtype="//schema.org/Article">
-    <header class="post-header">
-
-      <h1 class="post-title">
-        
-            <a class="post-title-link" href="/2016/10/18/当把EventBus比喻成苹果卖手机/" itemprop="url">
-              
-                <span itemprop="name">当把EventBus比喻成苹果卖手机</span>
-              
-            </a>
-        
-      </h1>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2016-10-18T09:45:50+08:00"
-              content="2016-10-18" >
-          10-18
-        </time>
-      </div>
-
-    </header>
-  </article>
-
-
-
-    
-
-      
-      
-      
-
-      
-      
-
-      
-
-  <article class="post post-type-normal" itemscope itemtype="//schema.org/Article">
-    <header class="post-header">
-
-      <h1 class="post-title">
-        
-            <a class="post-title-link" href="/2016/10/17/First设计模式思维导图/" itemprop="url">
-              
-                <span itemprop="name">Head First设计模式思维导图</span>
-              
-            </a>
-        
-      </h1>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2016-10-17T20:39:15+08:00"
-              content="2016-10-17" >
-          10-17
-        </time>
-      </div>
-
-    </header>
-  </article>
-
-
-
-    
-
-  </section>
 
   
+  
 
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                送一个内存泄漏给2016的记几
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-12-23T19:35:47+08:00" content="2016-12-23">
+              2016-12-23
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/12/23/送一个内存泄漏给2016的记几/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/12/23/送一个内存泄漏给2016的记几/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/12/23/送一个内存泄漏给2016的记几/" class="leancloud_visitors" data-flag-title="送一个内存泄漏给2016的记几">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>年底了，看友盟的bug列表，发现<strong>java.lang.OutOfMemoryError</strong>的问题不少，也该是时候还了。</p>
+<h1 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h1><p>在解决内存泄漏的过程中，遇到一个静态变量导致的内存泄漏，关键是这代码还是自己敲的，明明已经使用弱引用，为什么还是内存泄漏了。看代码：</p>
+<pre><code class="java"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">RtHttp</span> </span>{
+
+    <span class="keyword">public</span> <span class="keyword">static</span> RtHttp instance = <span class="keyword">new</span> RtHttp();
+    <span class="keyword">public</span> Context context;
+
+    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">with</span><span class="params">(Context context)</span></span>{
+        WeakReference&lt;Context&gt; wrContext = <span class="keyword">new</span> WeakReference&lt;Context&gt;(context);
+        instance.context = wrContext.get();
+    }
+}
+</code></pre>
+<p>RtHttp为封装客户端网络框架请求的入口，假设两个条件：</p>
+<ol>
+<li>其中传入的Context对象只能是Activity，不能使用context.getApplicationContext()（因为此RtHttp还封装了显示网络加载对话框的代码）。</li>
+<li>不能在Activity onDestroy()方法中调用RtHttp.instance.context = null;<br>已经使用了弱引用，为什么还是内存泄漏呢？</li>
+</ol>
+<p>记几想不通，还到谷歌搜索<strong>使用弱引用依然内存泄漏</strong>，<strong>WeakReference useless</strong>,无果。</p>
+<p><img src="/images/leak_despise.jpg" alt="new Module..."><br>如果你已经看出问题了，请直接到评论吐槽。<br>如果你没看出问题，请把引用的文章看一遍。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>一个内存泄漏的问题，反映了Java基础不牢固，在学习知识和解决问题上也不够深入。一直想写一篇2016的总结，希望以此内存泄漏的问题为界，实现在2017的一个技术提升。</p>
+<h1 id="引用"><a href="#引用" class="headerlink" title="引用"></a>引用</h1><blockquote>
+<p><a href="https://yq.aliyun.com/articles/3009" target="_blank" rel="external">Android 内存泄漏总结</a><br><a href="http://www.jianshu.com/p/66fecc0f97e6" target="_blank" rel="external">Java内存、Android 内存泄漏</a><br><a href="http://www.jianshu.com/p/214e42fc0d37" target="_blank" rel="external">Java gc(垃圾回收机制)小结，以及Android优化建议</a><br><a href="http://www.jianshu.com/p/4a09a51d208c" target="_blank" rel="external">JVM GC垃圾回收机制</a></p>
+</blockquote>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/内存泄漏，Leakcanary，单例模式/" rel="tag">#内存泄漏，Leakcanary，单例模式</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/12/15/模拟服务器返回数据/" rel="next" title="模拟服务器返回数据">
+                <i class="fa fa-chevron-left"></i> 模拟服务器返回数据
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
 
 
           </div>
@@ -533,6 +387,14 @@
 
 
           
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/12/23/送一个内存泄漏给2016的记几/"
+           data-title="送一个内存泄漏给2016的记几" data-url="http://yoursite.com/2016/12/23/送一个内存泄漏给2016的记几/">
+      </div>
+    
+  </div>
+
 
         </div>
         
@@ -552,8 +414,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview sidebar-panel  sidebar-panel-active ">
+      <section class="site-overview sidebar-panel ">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
           <img class="site-author-image" itemprop="image"
                src="/images/avatar.jpg"
@@ -596,6 +467,17 @@
 
       </section>
 
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#背景"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#问题描述"><span class="nav-number">2.</span> <span class="nav-text">问题描述</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#引用"><span class="nav-number">4.</span> <span class="nav-text">引用</span></a></li></ol></div>
+            
+          </div>
+        </section>
       
 
     </div>
@@ -692,11 +574,9 @@
   
 
   
-  
-    <script type="text/javascript" id="motion.page.archive">
-      $('.archive-year').velocity('transition.slideLeftIn');
-    </script>
-  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
 
 
   
