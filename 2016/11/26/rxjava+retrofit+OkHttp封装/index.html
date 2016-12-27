@@ -101,7 +101,7 @@ url地址中">
 服务器返回接口格式不一致，有的接口是返回json格式,有的返回String格式
 url地址中">
 <meta property="og:image" content="https://yuanjunli.github.io/images/rro_frame.png">
-<meta property="og:updated_time" content="2016-11-26T09:14:19.669Z">
+<meta property="og:updated_time" content="2016-12-27T02:13:46.704Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="RxJava+Retrofit+OkHttp封装">
 <meta name="twitter:description" content="原文链接：rxjava+retrofit+OkHttp封装
@@ -340,7 +340,7 @@ url地址中">
     <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String TAG = <span class="string">"RtHttp"</span>;
     <span class="keyword">public</span> <span class="keyword">static</span> RtHttp instance = <span class="keyword">new</span> RtHttp(); <span class="comment">//单例模式</span>
     <span class="keyword">private</span> Observable observable;
-    <span class="keyword">private</span> <span class="keyword">static</span> Context context;
+    <span class="keyword">private</span> <span class="keyword">static</span> WeakReference&lt;Context&gt; wrContext;
     <span class="keyword">private</span> <span class="keyword">boolean</span> isShowWaitingDialog;
 
     <span class="comment">/**设置Context,使用弱引用
@@ -348,8 +348,7 @@ url地址中">
      * <span class="doctag">@return</span>
      */</span>
     <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> RtHttp <span class="title">with</span><span class="params">(Context ct)</span></span>{
-        WeakReference&lt;Context&gt; wr = <span class="keyword">new</span> WeakReference&lt;Context&gt; (ct);
-        context = wr.get();
+        wrContext = <span class="keyword">new</span> WeakReference&lt;Context&gt; (ct);
         <span class="keyword">return</span> instance;
     }
 
@@ -378,7 +377,7 @@ url地址中">
      * <span class="doctag">@return</span>
      */</span>
     <span class="function"><span class="keyword">public</span> RtHttp <span class="title">subscriber</span><span class="params">(ApiSubscriber subscriber)</span></span>{
-        subscriber.setmCtx(context);  <span class="comment">//给subscriber设置Context，用于显示网络加载动画</span>
+        subscriber.setmCtx(wrContext.get());  <span class="comment">//给subscriber设置Context，用于显示网络加载动画</span>
         subscriber.setShowWaitDialog(isShowWaitingDialog); <span class="comment">//控制是否显示动画</span>
         observable.subscribe(subscriber); <span class="comment">//RxJava 方法</span>
         <span class="keyword">return</span> instance;
@@ -433,7 +432,7 @@ url地址中">
                 rtBuilder.baseUrl(Mobile.getBaseUrl());
             }
             <span class="keyword">if</span>(isAddSession){
-                okBuild.addInterceptor(<span class="keyword">new</span> HeaderInterceptor(context));
+                okBuild.addInterceptor(<span class="keyword">new</span> HeaderInterceptor(wrContext.get()));
             }
             <span class="keyword">if</span>(isAddParameter){
                 okBuild.addInterceptor(<span class="keyword">new</span> ParameterInterceptor());
