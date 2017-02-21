@@ -1,0 +1,965 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Glide,生命周期,工厂模式，代理模式," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.2" />
+
+
+
+
+
+
+<meta name="description" content="引言
+皮皮虾，又名虾姑，是淡水中的强者。其头部的两个锤节，可以轻易破坏贝类的外壳，身体上的步足可以保证快速移动。这些优秀的品质，使它被表情包盯上。
+
+Glide，作为Android最优秀的图片加载框架之一，能和Activity和Fragment的生命周期绑定，是区别于其它网络框架的核心特征，也是本文分析的重点。
+我们将此特征和皮皮虾表情包做一个类比：图片网络请求紧跟Activity、Fragmen">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Glide核心设计一：皮皮虾，我们走">
+<meta property="og:url" content="http://yoursite.com/2017/02/20/Glide核心设计一：皮皮虾，我们走/index.html">
+<meta property="og:site_name" content="NEXTB">
+<meta property="og:description" content="引言
+皮皮虾，又名虾姑，是淡水中的强者。其头部的两个锤节，可以轻易破坏贝类的外壳，身体上的步足可以保证快速移动。这些优秀的品质，使它被表情包盯上。
+
+Glide，作为Android最优秀的图片加载框架之一，能和Activity和Fragment的生命周期绑定，是区别于其它网络框架的核心特征，也是本文分析的重点。
+我们将此特征和皮皮虾表情包做一个类比：图片网络请求紧跟Activity、Fragmen">
+<meta property="og:image" content="http://yoursite.com/images/glide1_ppx.png">
+<meta property="og:image" content="http://yoursite.com/images/glide1_diagram.png">
+<meta property="og:updated_time" content="2017-02-21T08:20:38.299Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Glide核心设计一：皮皮虾，我们走">
+<meta name="twitter:description" content="引言
+皮皮虾，又名虾姑，是淡水中的强者。其头部的两个锤节，可以轻易破坏贝类的外壳，身体上的步足可以保证快速移动。这些优秀的品质，使它被表情包盯上。
+
+Glide，作为Android最优秀的图片加载框架之一，能和Activity和Fragment的生命周期绑定，是区别于其它网络框架的核心特征，也是本文分析的重点。
+我们将此特征和皮皮虾表情包做一个类比：图片网络请求紧跟Activity、Fragmen">
+<meta name="twitter:image" content="http://yoursite.com/images/glide1_ppx.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/02/20/Glide核心设计一：皮皮虾，我们走/"/>
+
+
+  <title> Glide核心设计一：皮皮虾，我们走 | NEXTB </title>
+</head>
+
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">NEXTB</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Glide核心设计一：皮皮虾，我们走
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-02-20T14:42:59+08:00" content="2017-02-20">
+              2017-02-20
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/02/20/Glide核心设计一：皮皮虾，我们走/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/02/20/Glide核心设计一：皮皮虾，我们走/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2017/02/20/Glide核心设计一：皮皮虾，我们走/" class="leancloud_visitors" data-flag-title="Glide核心设计一：皮皮虾，我们走">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h1><blockquote>
+<p>皮皮虾，又名虾姑，是淡水中的强者。其头部的两个锤节，可以轻易破坏贝类的外壳，身体上的步足可以保证快速移动。这些优秀的品质，使它被表情包盯上。</p>
+</blockquote>
+<p>Glide，作为Android最优秀的图片加载框架之一，能和Activity和Fragment的生命周期绑定，是区别于其它网络框架的核心特征，也是本文分析的重点。</p>
+<p>我们将此特征和皮皮虾表情包做一个类比：<br><img src="/images/glide1_ppx.png" alt="皮皮虾和Glide类比"><br>图片网络请求紧跟Activity、Fragment的生命周期，当页面不可交互时自动停止加载，当回到可交互状态时，继续加载。就像表情包（Activity、Fragment）控制皮皮虾（图片请求）一样。</p>
+<h1 id="框架设计"><a href="#框架设计" class="headerlink" title="框架设计"></a>框架设计</h1><h2 id="简单使用"><a href="#简单使用" class="headerlink" title="简单使用"></a>简单使用</h2><p><strong>Glide.with(Context).load(String).into(ImageView)</strong>可实现从网络中获取图片并展示到ImageView当中。其中和页面作生命周期绑定的主要入口是<strong>Glide.with(Context)</strong>。按照一般的分析逻辑应该先分析源码，才得出结论，但因一入源码深似海，不利于整体把握，所以先给出结论。Glide.with(Context)返回的是一个<strong>RequestManager</strong>,我们来看<strong>RequestManager</strong>的类的说明注释。</p>
+<blockquote>
+<p>A class for managing and starting requests for Glide. Can use activity, fragment and connectivity lifecycle events to intelligently stop, start, and restart requests. Retrieve either by instantiating a new object, or to take advantage built in Activity and Fragment lifecycle handling, use the static Glide.load methods with your Fragment or Activity.</p>
+</blockquote>
+<p>由此可知，该类就是用于将<strong>请求</strong>和<strong>Activity或Framgent的生命周期</strong>做绑定。</p>
+<h2 id="类图"><a href="#类图" class="headerlink" title="类图"></a>类图</h2><p>将和生命周期相关的类图如下（省略大部分类的变量和方法）：<br><img src="/images/glide1_diagram.png" alt="声明周期绑定类图"></p>
+<h3 id="类的简单介绍"><a href="#类的简单介绍" class="headerlink" title="类的简单介绍"></a>类的简单介绍</h3><ol>
+<li><strong>RequestManagerRetriever</strong>:该类用于创建RequestManager或在Activity、Fragment中找出已创建的RequestManager，RequestManagerRetriever是一个单例。</li>
+<li><strong>RequestManagerFragment</strong>:继承Fragment,不可见，仅用于保存RequestManager，还有一个SupportRequestManagerFragment继承v4包的Fragment,功能类似。</li>
+<li><strong>LifecycleListener</strong>：用于监听Activity、Fragment的生命周期事件。</li>
+<li><strong>Lifecycle</strong>：用于添加LifecycleListener。</li>
+<li><strong>ActivityFragmentLifecycle</strong>：实现Livecycle接口，用于通知Activity、Fragment的生命周期事件。</li>
+<li><strong>RequestTracker</strong>：该类用于跟踪、取消和重新启动执行中、已完成和失败的请求。</li>
+<li><strong>ConnectivityMonitor</strong>： 监听网络事件的接口，当网络状态发生变化时，影响网络请求状态，继承LifecycleListener。</li>
+<li><strong>DefaultConnectivityMonitor</strong>： ConnectivityMonitor的实现类，实现监听网络状态的逻辑。</li>
+<li><strong>RequestManagerConnectivityListener</strong>： 实现ConnectivityListener接口，将网络事件传递给RequestTracker。</li>
+</ol>
+<h3 id="类的联系"><a href="#类的联系" class="headerlink" title="类的联系"></a>类的联系</h3><p>以上对各类有一个简单的了解，接下来将重点讲清楚各类之间的联系。整个生命周期的绑定分为四部分。</p>
+<ol>
+<li>调用Glide.with(Context)，根据传入的Context类型创建RequestManager。Context可以为Activity、Fragment和Application。</li>
+<li>在传入的参数Activity、或者Fragment中，添加一个不可见的Fragment,监听不可见Fragment的生命周期并将该事件传递给和Fragment一一绑定的RequestManager。</li>
+<li>RequestManager监听到生命事件后，管理图片请求做出响应。</li>
+<li>监听当网络从无到有时，RequestManager要重新启动图片请求。</li>
+</ol>
+<h2 id="代码解读"><a href="#代码解读" class="headerlink" title="代码解读"></a>代码解读</h2><p>根据以上内容可直接跟代码可跳过以下内容，印象更加深刻。</p>
+<h3 id="第一部分-Glide-with-Context）"><a href="#第一部分-Glide-with-Context）" class="headerlink" title="第一部分:Glide.with(Context）"></a>第一部分:Glide.with(Context）</h3><pre><code class="java"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> RequestManager <span class="title">with</span><span class="params">(Context context)</span> </span>{
+        RequestManagerRetriever retriever = RequestManagerRetriever.get();
+        <span class="keyword">return</span> retriever.get(context);
+    }
+`
+</code></pre>
+<p>调用RequestManagerRetriever的get方法如下：</p>
+<pre><code class="java"><span class="function"><span class="keyword">public</span> RequestManager <span class="title">get</span><span class="params">(Context context)</span> </span>{
+        <span class="keyword">if</span> (context == <span class="keyword">null</span>) {
+            <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"You cannot start a load on a null Context"</span>);
+        } <span class="keyword">else</span> <span class="keyword">if</span> (Util.isOnMainThread() &amp;&amp; !(context <span class="keyword">instanceof</span> Application)) {
+            <span class="keyword">if</span> (context <span class="keyword">instanceof</span> FragmentActivity) {  <span class="comment">//传入的是Fragment</span>
+                <span class="keyword">return</span> get((FragmentActivity) context);
+            } <span class="keyword">else</span> <span class="keyword">if</span> (context <span class="keyword">instanceof</span> Activity) {  <span class="comment">//传入的是Acitivity</span>
+                <span class="keyword">return</span> get((Activity) context);
+            } <span class="keyword">else</span> <span class="keyword">if</span> (context <span class="keyword">instanceof</span> ContextWrapper) { <span class="comment">//传入的是Application</span>
+                <span class="keyword">return</span> get(((ContextWrapper) context).getBaseContext());
+            }
+        }
+
+        <span class="keyword">return</span> getApplicationManager(context);
+    }
+</code></pre>
+<p>以传入参数为Activity类型为例，代码如下：</p>
+<pre><code class="java"><span class="function"><span class="keyword">public</span> RequestManager <span class="title">get</span><span class="params">(Activity activity)</span> </span>{
+      <span class="keyword">if</span> (Util.isOnBackgroundThread() || Build.VERSION.SDK_INT &lt; Build.VERSION_CODES.HONEYCOMB) {
+          <span class="keyword">return</span> get(activity.getApplicationContext());
+      } <span class="keyword">else</span> {
+          assertNotDestroyed(activity);
+          android.app.FragmentManager fm = activity.getFragmentManager();   <span class="comment">//获取FragmentManager</span>
+          <span class="keyword">return</span> fragmentGet(activity, fm); 
+      }
+  }
+</code></pre>
+<p>主要调用fragmentGet方法，代码如下：</p>
+<pre><code class="java"><span class="function">RequestManager <span class="title">fragmentGet</span><span class="params">(Context context, android.app.FragmentManager fm)</span> </span>{
+       RequestManagerFragment current = getRequestManagerFragment(fm); 
+       RequestManager requestManager = current.getRequestManager();  <span class="comment">//根据RequestManagerFragment获取RequestManager，一个RequestManagerFragment包含一个RequestManager</span>
+       <span class="keyword">if</span> (requestManager == <span class="keyword">null</span>) {  <span class="comment">//若RequestManager为空，则新建一个并且设置到RequestManagerFragment中</span>
+           requestManager = <span class="keyword">new</span> RequestManager(context, current.getLifecycle(), current.getRequestManagerTreeNode());
+           current.setRequestManager(requestManager);
+       }
+       <span class="keyword">return</span> requestManager;
+   }
+</code></pre>
+<p>getRequestManagerFragment(fm)函数主要是根据FragmentManager获取Fragment,代码如下：</p>
+<pre><code class="java"><span class="function">RequestManagerFragment <span class="title">getRequestManagerFragment</span><span class="params">(<span class="keyword">final</span> android.app.FragmentManager fm)</span> </span>{
+       RequestManagerFragment current = (RequestManagerFragment) fm.findFragmentByTag(FRAGMENT_TAG);  <span class="comment">//通过Tag查找</span>
+       <span class="keyword">if</span> (current == <span class="keyword">null</span>) { <span class="comment">//若为空，从缓存pendingRequestManagerFragments中查找</span>
+           current = pendingRequestManagerFragments.get(fm);
+           <span class="keyword">if</span> (current == <span class="keyword">null</span>) { <span class="comment">//缓存中也不存在，则新建一个RequestManagerFragment，并且添加到页面中。</span>
+               current = <span class="keyword">new</span> RequestManagerFragment();
+               pendingRequestManagerFragments.put(fm, current);
+               fm.beginTransaction().add(current, FRAGMENT_TAG).commitAllowingStateLoss();
+               handler.obtainMessage(ID_REMOVE_FRAGMENT_MANAGER, fm).sendToTarget();
+           }
+       }
+       <span class="keyword">return</span> current;
+   }
+</code></pre>
+<p>以上就是根据传入的Context类型创建RequestManager的代码部分。</p>
+<h3 id="第二部分：监听不可见Fragment的生命周期并传递给RequestManager"><a href="#第二部分：监听不可见Fragment的生命周期并传递给RequestManager" class="headerlink" title="第二部分：监听不可见Fragment的生命周期并传递给RequestManager"></a>第二部分：监听不可见Fragment的生命周期并传递给RequestManager</h3><p>添加不可见Fragment的目的，就是因为该Fragment和父类的Activity具有同样的生命周期，无须改动原有Activity的代码，即可实现生命周期的监听。<br>RequestManagerFragment生命周期相关的代码如下：</p>
+<pre><code class="java"><span class="meta">@Override</span>
+   <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onStart</span><span class="params">()</span> </span>{
+       <span class="keyword">super</span>.onStart();
+       lifecycle.onStart(); <span class="comment">//执行lifecycle的onStart方法</span>
+   }
+
+   <span class="meta">@Override</span>
+   <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onStop</span><span class="params">()</span> </span>{
+       <span class="keyword">super</span>.onStop();
+       lifecycle.onStop();<span class="comment">//执行lifecycle的onStop方法</span>
+   }
+
+   <span class="meta">@Override</span>
+   <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onDestroy</span><span class="params">()</span> </span>{
+       <span class="keyword">super</span>.onDestroy();
+       lifecycle.onDestroy();<span class="comment">//执行lifecycle的onDestroy方法</span>
+   }
+</code></pre>
+<p>可以看出，Fragment的声明周期的监听都转移到类型是ActivityFragmentLifecycle的变量lifecycle中的对应方法执行。查看ActivityFragmentLifecycle的代码：</p>
+<pre><code class="java"><span class="function"><span class="keyword">void</span> <span class="title">onStart</span><span class="params">()</span> </span>{
+      isStarted = <span class="keyword">true</span>;
+      <span class="comment">//循环set集合lifecycleListeners中所有LifecycleListener，执行对应的onStart</span>
+      <span class="keyword">for</span> (LifecycleListener lifecycleListener : Util.getSnapshot(lifecycleListeners)) {
+          lifecycleListener.onStart();
+      }
+  }
+
+ <span class="comment">//省略onStop()和onDestroy()方法，和onStart()方法类似。</span>
+</code></pre>
+<p>set集合的LifecycleListener是如何添加进去的，看ActivityFragmentLifecycle中的代码：</p>
+<pre><code class="java"><span class="meta">@Override</span>
+    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">addListener</span><span class="params">(LifecycleListener listener)</span> </span>{
+        lifecycleListeners.add(listener);
+        <span class="keyword">if</span> (isDestroyed) {<span class="comment">//如果当前页面已经被destroy，则调用对应的onDestroy</span>
+            listener.onDestroy();
+        } <span class="keyword">else</span> <span class="keyword">if</span> (isStarted) {<span class="comment">//如果当前页面已经开启，则调用对应的onStart</span>
+            listener.onStart();
+        } <span class="keyword">else</span> {  <span class="comment">//其他情况调用onStop方法</span>
+            listener.onStop();
+        }
+    }
+</code></pre>
+<p>addListener(LifecycleListener listener)方法是接口Lifecycle的方法。RequestManagerFragment提供一个公有方法：</p>
+<pre><code class="java"><span class="function">ActivityFragmentLifecycle <span class="title">getLifecycle</span><span class="params">()</span> </span>{
+        <span class="keyword">return</span> lifecycle;
+    }
+</code></pre>
+<p>回看第一部分创建RequestManager时:</p>
+<pre><code class="java">requestManager = <span class="keyword">new</span> RequestManager(context, current.getLifecycle(), current.getRequestManagerTreeNode());
+</code></pre>
+<p>RequestManagerFragment中的Lifecycle作为RequestManager的构造函数的参数传递给RequestManager。RequestManager构造函数如下：</p>
+<pre><code class="java">RequestManager(Context context, <span class="keyword">final</span> Lifecycle lifecycle, RequestManagerTreeNode treeNode,
+           RequestTracker requestTracker, ConnectivityMonitorFactory factory) {
+       <span class="keyword">this</span>.context = context.getApplicationContext();
+       <span class="keyword">this</span>.lifecycle = lifecycle;
+       <span class="keyword">this</span>.treeNode = treeNode;
+       <span class="keyword">this</span>.requestTracker = requestTracker;
+       <span class="keyword">this</span>.glide = Glide.get(context);
+       <span class="keyword">this</span>.optionsApplier = <span class="keyword">new</span> OptionsApplier();
+       <span class="comment">//监听网络变化的类</span>
+       ConnectivityMonitor connectivityMonitor = factory.build(context,
+               <span class="keyword">new</span> RequestManagerConnectivityListener(requestTracker));
+
+       <span class="comment">// If we're the application level request manager, we may be created on a background thread. In that case we</span>
+       <span class="comment">// cannot risk synchronously pausing or resuming requests, so we hack around the issue by delaying adding</span>
+       <span class="comment">// ourselves as a lifecycle listener by posting to the main thread. This should be entirely safe.</span>
+       <span class="keyword">if</span> (Util.isOnBackgroundThread()) {
+           <span class="keyword">new</span> Handler(Looper.getMainLooper()).post(<span class="keyword">new</span> Runnable() {
+               <span class="meta">@Override</span>
+               <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>{
+                   <span class="comment">//在主线程中将当前类实现的LifecycleListener添加到lifecycle中。</span>
+                   lifecycle.addListener(RequestManager.<span class="keyword">this</span>);
+               }
+           });
+       } <span class="keyword">else</span> {
+           <span class="comment">//在主线程中将当前类实现的LifecycleListener添加到lifecycle中。</span>
+           lifecycle.addListener(<span class="keyword">this</span>);
+       }
+       lifecycle.addListener(connectivityMonitor);
+   }
+</code></pre>
+<p>由此可见，lifecycle添加的就是RequestManager实现的LifecycleListener接口。</p>
+<h3 id="第三部分：RequestManager实现LifecycleListener"><a href="#第三部分：RequestManager实现LifecycleListener" class="headerlink" title="第三部分：RequestManager实现LifecycleListener"></a>第三部分：RequestManager实现LifecycleListener</h3><p>接着查看RequestManager实现LifecycleListener的方法：</p>
+<pre><code class="java"><span class="meta">@Override</span>
+   <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onStart</span><span class="params">()</span> </span>{
+       <span class="comment">// onStart might not be called because this object may be created after the fragment/activity's onStart method.</span>
+       resumeRequests();
+   }
+
+   <span class="meta">@Override</span>
+   <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onStop</span><span class="params">()</span> </span>{
+       pauseRequests();
+   }
+
+   <span class="meta">@Override</span>
+   <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onDestroy</span><span class="params">()</span> </span>{
+       requestTracker.clearRequests();
+   }
+</code></pre>
+<p>继续进入resumeRequests()、pauseRequests()和requestTracker.clearRequests()方法可知，都是调用RequestTracker相应的方法，RequestTracker类包含一个集合的Request，该集合包含一个Activity获取一个<br>Fragment的所以图片请求，将根据RequestManagerFragment的生命周期，统一管理图片请求。</p>
+<h3 id="第四部分：监听网络状态并作出相应"><a href="#第四部分：监听网络状态并作出相应" class="headerlink" title="第四部分：监听网络状态并作出相应"></a>第四部分：监听网络状态并作出相应</h3><p>RequestManager的构造函数有如下方法：</p>
+<pre><code class="java"> <span class="comment">//省略部分代码...</span>
+ <span class="comment">//监听网络变化的类</span>
+ ConnectivityMonitor connectivityMonitor = factory.build(context,
+         <span class="keyword">new</span> RequestManagerConnectivityListener(requestTracker));
+ <span class="comment">//省略部分代码...</span>
+lifecycle.addListener(connectivityMonitor);         
+ <span class="comment">//省略部分代码...</span>
+</code></pre>
+<p>以上代码可看出，ConnectivityMonitor也实现了LifecycleListener。继续跟踪代码发现，factory的实例是ConnectivityMonitorFactory，在该工厂中会检查网络权限，同时创建ConnectivityMonitor的实例DefaultConnectivityMonitor。LifecycleListener接口的实现如下：</p>
+<pre><code class="java"><span class="meta">@Override</span>
+   <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onStart</span><span class="params">()</span> </span>{
+       register(); <span class="comment">//register（）方法为注册广播监听网络变化</span>
+   }
+
+   <span class="meta">@Override</span>
+   <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onStop</span><span class="params">()</span> </span>{
+       unregister(); <span class="comment">//解除监听广播</span>
+   }
+
+   <span class="meta">@Override</span>
+   <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onDestroy</span><span class="params">()</span> </span>{
+       <span class="comment">// Do nothing.</span>
+   }
+</code></pre>
+<p>广播接收器代码如下：</p>
+<pre><code class="java"><span class="keyword">private</span> <span class="keyword">final</span> BroadcastReceiver connectivityReceiver = <span class="keyword">new</span> BroadcastReceiver() {
+      <span class="meta">@Override</span>
+      <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onReceive</span><span class="params">(Context context, Intent intent)</span> </span>{
+          <span class="keyword">boolean</span> wasConnected = isConnected;
+          isConnected = isConnected(context);
+          <span class="keyword">if</span> (wasConnected != isConnected) {  <span class="comment">//当网络状态发生变化时，才调用listener.onConnectivityChanged()方法</span>
+              listener.onConnectivityChanged(isConnected);
+          }
+      }
+  };
+</code></pre>
+<p>ConnectivityListener 的实例的类型是RequestManager的内部类，代码如下：</p>
+<pre><code class="java"><span class="keyword">private</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">RequestManagerConnectivityListener</span> <span class="keyword">implements</span> <span class="title">ConnectivityMonitor</span>.<span class="title">ConnectivityListener</span> </span>{
+       <span class="keyword">private</span> <span class="keyword">final</span> RequestTracker requestTracker;
+
+       <span class="function"><span class="keyword">public</span> <span class="title">RequestManagerConnectivityListener</span><span class="params">(RequestTracker requestTracker)</span> </span>{
+           <span class="keyword">this</span>.requestTracker = requestTracker;
+       }
+
+       <span class="meta">@Override</span>
+       <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onConnectivityChanged</span><span class="params">(<span class="keyword">boolean</span> isConnected)</span> </span>{
+           <span class="keyword">if</span> (isConnected) { <span class="comment">//如果当前状态是链接状态</span>
+               requestTracker.restartRequests(); <span class="comment">//重新开启图片请求</span>
+           }
+       }
+   }
+</code></pre>
+<h1 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h1><p>以上就是Glide实现图片加载和Activity、Fragment生命周期绑定的全部分析。会发现使用了观察者模式和工厂模式进行解耦，其中创建一个不可见的Fragment设置到需要被监控生命周期的Activity、Fragment中，最为精彩。接下来将分析Glide核心设计二：图片缓存。敬请期待。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Glide/" rel="tag">#Glide</a>
+          
+            <a href="/tags/生命周期/" rel="tag">#生命周期</a>
+          
+            <a href="/tags/工厂模式，代理模式/" rel="tag">#工厂模式，代理模式</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/12/23/送一个内存泄漏给2016的记几/" rel="next" title="送一个内存泄漏给2016的记几">
+                <i class="fa fa-chevron-left"></i> 送一个内存泄漏给2016的记几
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2017/02/20/Glide核心设计一：皮皮虾，我们走/"
+           data-title="Glide核心设计一：皮皮虾，我们走" data-url="http://yoursite.com/2017/02/20/Glide核心设计一：皮皮虾，我们走/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.jpg"
+               alt="NEXT" />
+          <p class="site-author-name" itemprop="name">NEXT</p>
+          <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">9</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">19</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#引言"><span class="nav-number">1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#框架设计"><span class="nav-number">2.</span> <span class="nav-text">框架设计</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#简单使用"><span class="nav-number">2.1.</span> <span class="nav-text">简单使用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#类图"><span class="nav-number">2.2.</span> <span class="nav-text">类图</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#类的简单介绍"><span class="nav-number">2.2.1.</span> <span class="nav-text">类的简单介绍</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#类的联系"><span class="nav-number">2.2.2.</span> <span class="nav-text">类的联系</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#代码解读"><span class="nav-number">2.3.</span> <span class="nav-text">代码解读</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#第一部分-Glide-with-Context）"><span class="nav-number">2.3.1.</span> <span class="nav-text">第一部分:Glide.with(Context）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#第二部分：监听不可见Fragment的生命周期并传递给RequestManager"><span class="nav-number">2.3.2.</span> <span class="nav-text">第二部分：监听不可见Fragment的生命周期并传递给RequestManager</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#第三部分：RequestManager实现LifecycleListener"><span class="nav-number">2.3.3.</span> <span class="nav-text">第三部分：RequestManager实现LifecycleListener</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#第四部分：监听网络状态并作出相应"><span class="nav-number">2.3.4.</span> <span class="nav-text">第四部分：监听网络状态并作出相应</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#小结"><span class="nav-number">3.</span> <span class="nav-text">小结</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">NEXT</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"nextb"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/lib/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("HOe9TkPiadv0Afw5jGl0gEuC-gzGzoHsz", "uPWanKlo8K6iWVB1KIajxCgk");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+</body>
+</html>
