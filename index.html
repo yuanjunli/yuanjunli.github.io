@@ -231,6 +231,472 @@
             
               
                 
+                <a class="post-title-link" href="/2017/02/27/Glide核心设计二-缓存管理/" itemprop="url">
+                  Glide核心设计二:缓存管理
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-02-27T13:50:20+08:00" content="2017-02-27">
+              2017-02-27
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/02/27/Glide核心设计二-缓存管理/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/02/27/Glide核心设计二-缓存管理/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2017/02/27/Glide核心设计二-缓存管理/" class="leancloud_visitors" data-flag-title="Glide核心设计二:缓存管理">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h1><p>Glide作为一个优秀的图片加载框架，缓存管理是必不可少的一部分，这篇文章主要通过各个角度、从整体设计到代码实现，深入的分析Glide的缓存管理模块，力求在同类分析Glide缓存的分析文章中<strong>脱颖而出</strong>。关于Glide的生命周期绑定，可查看Glide系列文章<a href="https://yuanjunli.github.io/2017/02/20/Glide%E6%A0%B8%E5%BF%83%E8%AE%BE%E8%AE%A1%E4%B8%80%EF%BC%9A%E7%9A%AE%E7%9A%AE%E8%99%BE%EF%BC%8C%E6%88%91%E4%BB%AC%E8%B5%B0/" target="_blank" rel="external">Glide核心设计一：皮皮虾，我们走</a>。</p>
+<h1 id="前提"><a href="#前提" class="headerlink" title="前提"></a>前提</h1><ol>
+<li>本文分析Glide缓存管理，将以使用Glide加载网络图片为例子，如加载本地图片、Gif资源等使用不是本文的重点。因不管是何种使用方式，缓存模块都是一样的，只抓住网络加载图片这条主线，逻辑会更清晰。</li>
+<li>本文将先给出Glide缓存管理整体设计的结论，然后再分析源码。</li>
+</ol>
+<h1 id="整体设计"><a href="#整体设计" class="headerlink" title="整体设计"></a>整体设计</h1><h2 id="缓存类型"><a href="#缓存类型" class="headerlink" title="缓存类型"></a>缓存类型</h2><p>Glide的缓存类型分为两大类，一类是Resource缓存，一类是Bitmap缓存。</p>
+<h3 id="Resource缓存"><a href="#Resource缓存" class="headerlink" title="Resource缓存"></a>Resource缓存</h3><p>为什么需要缓存图片Resource，很好理解，因为图片从网络加载，将图片缓存到本地，当需要再次使用时，直接从缓存中取出而无需再次请求网络。</p>
+<h4 id="三层缓存"><a href="#三层缓存" class="headerlink" title="三层缓存"></a>三层缓存</h4><p>Glide在缓存Resource使用三层缓存，包括：</p>
+<ol>
+<li>一级缓存：缓存被回收的资源，使用LRU算法（Least Frequently Used，最近最少使用算法）。当需要再次使用到被回收的资源，直接从内存返回。</li>
+<li>二级缓存：使用弱引用缓存正在使用的资源。当系统执行gc操作时，会回收没有强引用的资源。使用弱引用缓存资源，既可以缓存正在使用的强引用资源，也不阻碍系统需要回收无引用资源。</li>
+<li>三级缓存：磁盘缓存。网络图片下载成功后将以文件的形式缓存到磁盘中。</li>
+</ol>
+<h3 id="Bitmap缓存"><a href="#Bitmap缓存" class="headerlink" title="Bitmap缓存"></a>Bitmap缓存</h3><h4 id="Bitmap所占内存大小"><a href="#Bitmap所占内存大小" class="headerlink" title="Bitmap所占内存大小"></a>Bitmap所占内存大小</h4><p>Bitmap所占的内存大小由三部分组成：图片的宽度分辨率、高度分辨率和Bitmap质量参数。公式是：Bitmap内存大小 = (宽pix<em>长pix)</em>质量参数所占的位数。单位是字节B。</p>
+<h4 id="Bitmap压缩质量参数"><a href="#Bitmap压缩质量参数" class="headerlink" title="Bitmap压缩质量参数"></a>Bitmap压缩质量参数</h4><p>质量参数决定每一个像素点用多少位(bit)来显示：</p>
+<ol>
+<li>ALPHA_8就是Alpha由8位组成(1B)</li>
+<li>ARGB_4444就是由4个4位组成即16位(2B)</li>
+<li>ARGB_8888就是由4个8位组成即32位(4B)</li>
+<li>RGB_565就是R为5位，G为6位，B为5位共16位(2B)</li>
+</ol>
+<p>Glide默认使用RGB_565，比系统默认使用的ARGB_8888节省一半的资源，但RGB_565无法显示透明度。<br>举个例子:在手机上显示100pix*200pix的图片，解压前15KB，是使用Glide加载(默认RGB_565)Bitmap所占用的内存是：(100x200)x2B = 40000B≈40Kb,比以文件的形成存储的增加不少，因为png、jpg等格式的图片经过压缩。正因为Bitmap比较消耗内存，例如使用Recyclerview等滑动控件显示大量图片时，将大量的创建和回收Bitmap,导致内存波动影响性能。</p>
+<h4 id="Bitmap缓存算法"><a href="#Bitmap缓存算法" class="headerlink" title="Bitmap缓存算法"></a>Bitmap缓存算法</h4><p>在Glide中，使用BitmapPool来缓存Bitmap,使用的也是LRU算法。当需要使用Bitmap时，从Bitmap的池子中取出合适的Bitmap,若取不到合适的，则再新创建。当Bitmap使用完后，不直接调用Bitmap.recycler()回收，而是放入Bitmap的池子。</p>
+<h2 id="缓存的Key类型"><a href="#缓存的Key类型" class="headerlink" title="缓存的Key类型"></a>缓存的Key类型</h2><p>Glide的缓存使用<key,value>的形式缓存，Resource和Bitmap都是作为Value的部分，将value存储时，必须要有一个Key标识缓存的内容，根据该Key可查找、移除对应的缓存。<br><img src="/images/glide2_key_compare.png" alt="缓存的key对比"></key,value></p>
+<ol>
+<li>从对比中可看出，Resource三层缓存所使用的key的构造形式是一样的，包括图片id(图片的Url地址),宽高等参数来标识。对于其他参数，举一个例子理解：图片资源从网络加载后，经过解码(decode)、缓存到磁盘、从磁盘中取出、变换资源（加圆角等,transformation）、磁盘缓存变换后的图片资源、转码(transcode)显示。</li>
+<li>Bitmap的缓存Key的构造相对简单得多,由长、宽的分辨率以及图片压缩参数即可唯一标示一个回收的Bitmap。当需要使用的bitmap时，在BitmapPool中查找对应的长、宽和config都一样的Bitmap并返回，而无需重新创建。</li>
+</ol>
+<h2 id="Resource缓存流程"><a href="#Resource缓存流程" class="headerlink" title="Resource缓存流程"></a>Resource缓存流程</h2><p>Resource包括三层缓存，通过流程图看它们之间的关系：<br><img src="/images/glide2_resource_process.png" alt="Resource加载流程"><br>因为内存缓存优于磁盘缓存，所以当需要使用资源时，先从内存缓存中查找(一级缓存和二级缓存都是内存缓存,其功能不一样，一级缓存用于在内存中缓存不是正在使用的资源，二级缓存是保存正在使用的资源)，再从磁盘缓存中查找。若都找不到，则从网络加载。</p>
+<h2 id="滑动控件多图的性能优化"><a href="#滑动控件多图的性能优化" class="headerlink" title="滑动控件多图的性能优化"></a>滑动控件多图的性能优化</h2><p>不论是Resource还是Bitmap缓存，若显示的仅是部分照片，并且不存在频繁使用的场景，则使用Glide没有太大的优势。设计缓存的目的就是为了在<strong>重复显示时，更快、更省的显示图片资源</strong>。Glide有针对ListView、Recyclerview等控件加载多图时进行优化。此处讨论最常见的场景：Recyclerview显示多图，简略图如下。<br><img src="/images/glide2_recyclerview.png" alt="Glide在Recyclerview的使用"><br>如上图所示，当图5划入界面时，会复用图一的Item,设置新的图片之前，会先清空原有图片的资源，清空时会把Resource资源放入一级缓存待将来复用，同时会将回收的Bitmap放入BitmapPool中；当图5向下隐藏，图一出现时，图5的资源会放到一级缓存中，图一的资源则从一级缓存中取出，无须重新网络请求，同时所需要的Bitmap也无须重新创建，直接复用。</p>
+<h2 id="LRU算法"><a href="#LRU算法" class="headerlink" title="LRU算法"></a>LRU算法</h2><p>BitmapPool的LRU算法流程图如下：<br><img src="/images/glide2_lru_process.png" alt="BitmapPool LRU流程"></p>
+<h2 id="类图"><a href="#类图" class="headerlink" title="类图"></a>类图</h2><p>在进行代码分析前，先给出跟Glide缓存管理相关的类图(省略类的大部分变量和方法)。<br><img src="/images/glide2_diagram.png" alt="Glide缓存管理类图"><br><a href="https://www.processon.com/view/link/58b408f9e4b02ba7e0821140" target="_blank" rel="external">Glide缓存管理类图大图地址</a></p>
+<h1 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h1><p>根据以上的Glide缓存管理的结论及类图，可自主跟源码，跳过以下内容。</p>
+<h2 id="Glide-with-Context-load-String-into-ImageView"><a href="#Glide-with-Context-load-String-into-ImageView" class="headerlink" title="Glide.with(Context).load(String).into(ImageView)"></a>Glide.with(Context).load(String).into(ImageView)</h2><h2 id="Glide-with-Context"><a href="#Glide-with-Context" class="headerlink" title="Glide.with(Context)"></a>Glide.with(Context)</h2><p>返回RequestManager,主要实现和Fragment、Activity生命周期的绑定,详情请看<a href="https://yuanjunli.github.io/2017/02/20/Glide%E6%A0%B8%E5%BF%83%E8%AE%BE%E8%AE%A1%E4%B8%80%EF%BC%9A%E7%9A%AE%E7%9A%AE%E8%99%BE%EF%BC%8C%E6%88%91%E4%BB%AC%E8%B5%B0/" target="_blank" rel="external">Glide核心设计一：皮皮虾，我们走</a>。</p>
+<h2 id="load-String"><a href="#load-String" class="headerlink" title=".load(String)"></a>.load(String)</h2><p>RequestManager的load(String)方法返回DrawableTypeRequest，根据图片地址返回一个用于创建图片请求的Request的Builder,代码如下：</p>
+<pre><code class="java"><span class="function"><span class="keyword">public</span> DrawableTypeRequest&lt;String&gt; <span class="title">load</span><span class="params">(String string)</span> </span>{
+        <span class="keyword">return</span> (DrawableTypeRequest&lt;String&gt;) fromString().load(string); <span class="comment">//调用fromString()和load()方法</span>
+    }
+</code></pre>
+<p>fromString()方法调用loadGeneric()方法，代码如下：</p>
+<pre><code class="java"><span class="function"><span class="keyword">public</span> DrawableTypeRequest&lt;String&gt; <span class="title">fromString</span><span class="params">()</span> </span>{
+       <span class="keyword">return</span> loadGeneric(String.class); 
+   }
+
+ <span class="keyword">private</span> &lt;T&gt; <span class="function">DrawableTypeRequest&lt;T&gt; <span class="title">loadGeneric</span><span class="params">(Class&lt;T&gt; modelClass)</span> </span>{
+        ModelLoader&lt;T, InputStream&gt; streamModelLoader = Glide.buildStreamModelLoader(modelClass, context);
+        ModelLoader&lt;T, ParcelFileDescriptor&gt; fileDescriptorModelLoader =
+                Glide.buildFileDescriptorModelLoader(modelClass, context);
+        <span class="keyword">if</span> (modelClass != <span class="keyword">null</span> &amp;&amp; streamModelLoader == <span class="keyword">null</span> &amp;&amp; fileDescriptorModelLoader == <span class="keyword">null</span>) {
+            <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"Unknown type "</span> + modelClass + <span class="string">". You must provide a Model of a type for"</span>
+                    + <span class="string">" which there is a registered ModelLoader, if you are using a custom model, you must first call"</span>
+                    + <span class="string">" Glide#register with a ModelLoaderFactory for your custom model class"</span>);
+        }
+
+        <span class="keyword">return</span> optionsApplier.apply(  <span class="comment">//传递的参数中创建了一个DrawableTypeRequest并返回该对象</span>
+                <span class="keyword">new</span> DrawableTypeRequest&lt;T&gt;(modelClass, streamModelLoader, fileDescriptorModelLoader, context,
+                        glide, requestTracker, lifecycle, optionsApplier));  
+    }
+</code></pre>
+<p>DrawableTypeRequest的load()方法如下:</p>
+<pre><code class="java"><span class="meta">@Override</span>
+   <span class="function"><span class="keyword">public</span> DrawableRequestBuilder&lt;ModelType&gt; <span class="title">load</span><span class="params">(ModelType model)</span> </span>{
+       <span class="keyword">super</span>.load(model);
+       <span class="keyword">return</span> <span class="keyword">this</span>;
+   }
+</code></pre>
+<p>DrawableTypeRequest父类是DrawableRequestBuilder，父类的父类是GenericRequestBuilder，调用super.load()方法如下：</p>
+<pre><code class="java"><span class="function"><span class="keyword">public</span> GenericRequestBuilder&lt;ModelType, DataType, ResourceType, TranscodeType&gt; <span class="title">load</span><span class="params">(ModelType model)</span> </span>{
+       <span class="keyword">this</span>.model = model;
+       isModelSet = <span class="keyword">true</span>;
+       <span class="keyword">return</span> <span class="keyword">this</span>;
+   }
+</code></pre>
+<p>以上代码可知，缓存管理的主要实现代码并不在.load(Sting)代码，接下来继续分析<strong>.into(ImageView)</strong>代码。</p>
+<h2 id="into-ImageView"><a href="#into-ImageView" class="headerlink" title=".into(ImageView)"></a>.into(ImageView)</h2><p>GenericRequestBuilder的into(ImageView)代码如下：</p>
+<pre><code class="java"><span class="function"><span class="keyword">public</span> Target&lt;TranscodeType&gt; <span class="title">into</span><span class="params">(ImageView view)</span> </span>{
+        Util.assertMainThread();
+        <span class="keyword">if</span> (view == <span class="keyword">null</span>) { 
+            <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"You must pass in a non null View"</span>);
+        }
+
+        <span class="keyword">if</span> (!isTransformationSet &amp;&amp; view.getScaleType() != <span class="keyword">null</span>) {
+            <span class="keyword">switch</span> (view.getScaleType()) {  <span class="comment">//根据图片的scaleType做相应处理</span>
+                <span class="keyword">case</span> CENTER_CROP:
+                    applyCenterCrop();
+                    <span class="keyword">break</span>;
+                <span class="keyword">case</span> FIT_CENTER:
+                <span class="keyword">case</span> FIT_START:
+                <span class="keyword">case</span> FIT_END:
+                    applyFitCenter();
+                    <span class="keyword">break</span>;
+                <span class="comment">//$CASES-OMITTED$</span>
+                <span class="keyword">default</span>:
+                    <span class="comment">// Do nothing.</span>
+            }
+        }
+        <span class="comment">//调用buildImageViewTarget()方法创建了一个Target类型的对象</span>
+        <span class="keyword">return</span> into(glide.buildImageViewTarget(view, transcodeClass));  
+    }
+</code></pre>
+<p>以上代码主要有两个功能：</p>
+<ol>
+<li>根据ScaleType进行图片的变换</li>
+<li>将ImageView转换成一个Target</li>
+</ol>
+<p>继续查看into(Target)的代码：</p>
+<pre><code class="java"><span class="keyword">public</span> &lt;Y extends Target&lt;TranscodeType&gt;&gt; <span class="function">Y <span class="title">into</span><span class="params">(Y target)</span> </span>{
+       Util.assertMainThread();
+       <span class="keyword">if</span> (target == <span class="keyword">null</span>) {
+           <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"You must pass in a non null Target"</span>);
+       }
+       <span class="keyword">if</span> (!isModelSet) {
+           <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"You must first set a model (try #load())"</span>);
+       }
+
+       Request previous = target.getRequest();  <span class="comment">//获取请求体Request</span>
+
+       <span class="keyword">if</span> (previous != <span class="keyword">null</span>) { <span class="comment">//若ImageView是复用过的，则previous不为空</span>
+           previous.clear(); <span class="comment">//调用clear()方法清空ImageView上的图片资源，此方法会将回收的Resource放入内存缓存中，并不在内存中清空该资源。</span>
+           requestTracker.removeRequest(previous); <span class="comment">//移除老的请求</span>
+           previous.recycle(); <span class="comment">//回收Request使用</span>
+       }
+
+       Request request = buildRequest(target); <span class="comment">//获取新的Request</span>
+       target.setRequest(request); <span class="comment">//将新的request设置到target中</span>
+       lifecycle.addListener(target); <span class="comment">//添加生命周期的监听</span>
+       requestTracker.runRequest(request); <span class="comment">//启动Request</span>
+
+       <span class="keyword">return</span> target;
+   }
+</code></pre>
+<p>以上代码，主要将图片加载的Request绑定到Target中，若原有Target具有旧的Request,得先处理旧的Request,再绑定上新的Request。target.setRequest()和target.getRequest()最终会调用ViewTarget的setRequest()方法和getRequest()方法，代码如下：</p>
+<pre><code class="java"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setRequest</span><span class="params">(Request request)</span> </span>{
+        setTag(request);
+    }
+    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">setTag</span><span class="params">(Object tag)</span> </span>{
+                 <span class="keyword">if</span> (tagId == <span class="keyword">null</span>) {
+                     isTagUsedAtLeastOnce = <span class="keyword">true</span>;
+                     view.setTag(tag);<span class="comment">//调用view的setTag方法，将Request和view做绑定</span>
+                 } <span class="keyword">else</span> {
+                     view.setTag(tagId, tag);<span class="comment">//调用view的setTag方法，将Request和view做绑定</span>
+                 }
+    }
+    <span class="function"><span class="keyword">public</span> Request <span class="title">getRequest</span><span class="params">()</span> </span>{
+                    Object tag = getTag(); <span class="comment">//获取view 的tag</span>
+                    Request request = <span class="keyword">null</span>;
+                    <span class="keyword">if</span> (tag != <span class="keyword">null</span>) {
+                        <span class="keyword">if</span> (tag <span class="keyword">instanceof</span> Request) {  <span class="comment">//若该tag是Request的一个实例</span>
+                            request = (Request) tag; 
+                        } <span class="keyword">else</span> {  <span class="comment">//用户不能给view设置tag，因为该view的tag要用于保存Glide的Request对象，否则抛出异常</span>
+                            <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"You must not call setTag() on a view Glide is targeting"</span>);
+                        }
+                    }
+                    <span class="keyword">return</span> request;
+            }
+</code></pre>
+<p>以上代码可知，Request通过setTag的方式和View进行绑定，当View是复用时，则Request不为空，通过Request可对原来的资源进行缓存与回收。此处通过View的setTag()方法绑定Request,可谓妙用。</p>
+<p>以上代码创建了一个Request,<strong>requestTracker.runRequest(request);</strong>启动了Request，调用Request的begin()方法,该Request实例是GenericRequest，begin()代码如下：</p>
+<pre><code class="java"><span class="meta">@Override</span>
+    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">begin</span><span class="params">()</span> </span>{
+        startTime = LogTime.getLogTime();
+        <span class="keyword">if</span> (model == <span class="keyword">null</span>) {
+            onException(<span class="keyword">null</span>);
+            <span class="keyword">return</span>;
+        }
+
+        status = Status.WAITING_FOR_SIZE; <span class="comment">//设置等待图片size的宽高状态</span>
+        <span class="keyword">if</span> (Util.isValidDimensions(overrideWidth, overrideHeight)) { <span class="comment">//必须要确定图片的宽高，确定了则调用onSizeReady</span>
+            onSizeReady(overrideWidth, overrideHeight);
+        } <span class="keyword">else</span> { <span class="comment">//设置回调，监听界面的绘制，当检测到宽高有效时，回调onSizeReady方法</span>
+            target.getSize(<span class="keyword">this</span>);
+        }
+
+        <span class="keyword">if</span> (!isComplete() &amp;&amp; !isFailed() &amp;&amp; canNotifyStatusChanged()) {
+            target.onLoadStarted(getPlaceholderDrawable());
+        }
+        <span class="keyword">if</span> (Log.isLoggable(TAG, Log.VERBOSE)) {
+            logV(<span class="string">"finished run method in "</span> + LogTime.getElapsedMillis(startTime));
+        }
+    }
+</code></pre>
+<p>加载图片前，必须要确定图片的宽高，因为需要根据确定的宽高来获取资源。onSizeReady代码如下：</p>
+<pre><code class="java"><span class="meta">@Override</span>
+    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onSizeReady</span><span class="params">(<span class="keyword">int</span> width, <span class="keyword">int</span> height)</span> </span>{
+        <span class="keyword">if</span> (Log.isLoggable(TAG, Log.VERBOSE)) {
+            logV(<span class="string">"Got onSizeReady in "</span> + LogTime.getElapsedMillis(startTime));
+        }
+        <span class="keyword">if</span> (status != Status.WAITING_FOR_SIZE) {<span class="comment">//宽高没准备好，返回</span>
+            <span class="keyword">return</span>;
+        }
+        status = Status.RUNNING;  <span class="comment">//状态改为加载运行中</span>
+
+        width = Math.round(sizeMultiplier * width);
+        height = Math.round(sizeMultiplier * height);
+
+        ModelLoader&lt;A, T&gt; modelLoader = loadProvider.getModelLoader();
+        <span class="keyword">final</span> DataFetcher&lt;T&gt; dataFetcher = modelLoader.getResourceFetcher(model, width, height);
+
+        <span class="keyword">if</span> (dataFetcher == <span class="keyword">null</span>) {
+            onException(<span class="keyword">new</span> Exception(<span class="string">"Failed to load model: \'"</span> + model + <span class="string">"\'"</span>));
+            <span class="keyword">return</span>;
+        }
+        ResourceTranscoder&lt;Z, R&gt; transcoder = loadProvider.getTranscoder();
+        <span class="keyword">if</span> (Log.isLoggable(TAG, Log.VERBOSE)) {
+            logV(<span class="string">"finished setup for calling load in "</span> + LogTime.getElapsedMillis(startTime));
+        }
+        loadedFromMemoryCache = <span class="keyword">true</span>;
+        <span class="comment">//真正的加载任务交给engine</span>
+        loadStatus = engine.load(signature, width, height, dataFetcher, loadProvider, transformation, transcoder,
+                priority, isMemoryCacheable, diskCacheStrategy, <span class="keyword">this</span>);
+        loadedFromMemoryCache = resource != <span class="keyword">null</span>;
+        <span class="keyword">if</span> (Log.isLoggable(TAG, Log.VERBOSE)) {
+            logV(<span class="string">"finished onSizeReady in "</span> + LogTime.getElapsedMillis(startTime));
+        }
+    }
+</code></pre>
+<p>以上代码可知，在确定宽高后，将图片加载的任务交给类型为Engine的对象engine,并调用其load方法，代码如下:</p>
+<pre><code class="java"><span class="keyword">public</span> &lt;T, Z, R&gt; <span class="function">LoadStatus <span class="title">load</span><span class="params">(Key signature, <span class="keyword">int</span> width, <span class="keyword">int</span> height, DataFetcher&lt;T&gt; fetcher,
+           DataLoadProvider&lt;T, Z&gt; loadProvider, Transformation&lt;Z&gt; transformation, ResourceTranscoder&lt;Z, R&gt; transcoder,
+           Priority priority, <span class="keyword">boolean</span> isMemoryCacheable, DiskCacheStrategy diskCacheStrategy, ResourceCallback cb)</span> </span>{
+       Util.assertMainThread();
+       <span class="keyword">long</span> startTime = LogTime.getLogTime();
+
+       <span class="keyword">final</span> String id = fetcher.getId(); <span class="comment">//该id为图片的网络地址</span>
+       <span class="comment">//缓存key的组成部分，使用工厂模式</span>
+       EngineKey key = keyFactory.buildKey(id, signature, width, height, loadProvider.getCacheDecoder(),
+               loadProvider.getSourceDecoder(), transformation, loadProvider.getEncoder(),
+               transcoder, loadProvider.getSourceEncoder());
+       <span class="comment">//使用一级缓存，从回收的内存缓存中查找EngineResource</span>
+       EngineResource&lt;?&gt; cached = loadFromCache(key, isMemoryCacheable);
+       <span class="keyword">if</span> (cached != <span class="keyword">null</span>) { <span class="comment">//命中则直接返回</span>
+           cb.onResourceReady(cached);
+           <span class="keyword">if</span> (Log.isLoggable(TAG, Log.VERBOSE)) {
+               logWithTimeAndKey(<span class="string">"Loaded resource from cache"</span>, startTime, key);
+           }
+           <span class="keyword">return</span> <span class="keyword">null</span>;
+       }
+       <span class="comment">//从二级缓存中查找</span>
+       EngineResource&lt;?&gt; active = loadFromActiveResources(key, isMemoryCacheable);
+       <span class="keyword">if</span> (active != <span class="keyword">null</span>) {<span class="comment">//命中则直接返回</span>
+           cb.onResourceReady(active);
+           <span class="keyword">if</span> (Log.isLoggable(TAG, Log.VERBOSE)) {
+               logWithTimeAndKey(<span class="string">"Loaded resource from active resources"</span>, startTime, key);
+           }
+           <span class="keyword">return</span> <span class="keyword">null</span>;
+       }
+
+       EngineJob current = jobs.get(key);
+       <span class="keyword">if</span> (current != <span class="keyword">null</span>) {<span class="comment">//该任务已经在执行，只需要添加回调接口，在任务执行完后调用接口告知即可</span>
+           current.addCallback(cb);
+           <span class="keyword">if</span> (Log.isLoggable(TAG, Log.VERBOSE)) {
+               logWithTimeAndKey(<span class="string">"Added to existing load"</span>, startTime, key);
+           }
+           <span class="keyword">return</span> <span class="keyword">new</span> LoadStatus(cb, current);
+       }
+       <span class="comment">//一级缓存和二级缓存都不命中的情况下，启动新的任务</span>
+       EngineJob engineJob = engineJobFactory.build(key, isMemoryCacheable);<span class="comment">//创建EngineJob</span>
+       DecodeJob&lt;T, Z, R&gt; decodeJob = <span class="keyword">new</span> DecodeJob&lt;T, Z, R&gt;(key, width, height, fetcher, loadProvider, transformation,
+               transcoder, diskCacheProvider, diskCacheStrategy, priority); <span class="comment">//创建DecodeJob</span>
+       EngineRunnable runnable = <span class="keyword">new</span> EngineRunnable(engineJob, decodeJob, priority); 
+       jobs.put(key, engineJob);
+       engineJob.addCallback(cb);
+       engineJob.start(runnable); <span class="comment">//启动EngineRunnable runnable，使用线程池FifoPriorityThreadPoolExecutor管理</span>
+
+       <span class="keyword">if</span> (Log.isLoggable(TAG, Log.VERBOSE)) {
+           logWithTimeAndKey(<span class="string">"Started new load"</span>, startTime, key);
+       }
+       <span class="keyword">return</span> <span class="keyword">new</span> LoadStatus(cb, engineJob);
+   }
+</code></pre>
+<p>分析至此，我们终于看到实现一级缓存和二级缓存的相关代码，可以猜测三级缓存的实现跟EngineRunnable有关。engineJob.start(runnable)会启动EngineRunnable的start()方法。代码如下：</p>
+<pre><code class="java"><span class="meta">@Override</span>
+   <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>{
+       <span class="keyword">if</span> (isCancelled) {
+           <span class="keyword">return</span>;
+       }
+
+       Exception exception = <span class="keyword">null</span>;
+       Resource&lt;?&gt; resource = <span class="keyword">null</span>;
+       <span class="keyword">try</span> {
+           resource = decode();  <span class="comment">//调用decode()方法</span>
+       } <span class="keyword">catch</span> (Exception e) {
+           <span class="keyword">if</span> (Log.isLoggable(TAG, Log.VERBOSE)) {
+               Log.v(TAG, <span class="string">"Exception decoding"</span>, e);
+           }
+           exception = e;
+       }
+
+       <span class="keyword">if</span> (isCancelled) { <span class="comment">//请求被取消</span>
+           <span class="keyword">if</span> (resource != <span class="keyword">null</span>) {
+               resource.recycle();
+           }
+           <span class="keyword">return</span>;
+       }
+
+       <span class="keyword">if</span> (resource == <span class="keyword">null</span>) { <span class="comment">//加载失败</span>
+           onLoadFailed(exception);
+       } <span class="keyword">else</span> { <span class="comment">//加载成功</span>
+           onLoadComplete(resource);
+       }
+   }
+</code></pre>
+<p>查看decode()方法如下：</p>
+<pre><code class="java"><span class="keyword">private</span> Resource&lt;?&gt; decode() <span class="keyword">throws</span> Exception {
+        <span class="keyword">if</span> (isDecodingFromCache()) {
+            <span class="keyword">return</span> decodeFromCache();  <span class="comment">//从磁盘缓存中获取</span>
+        } <span class="keyword">else</span> {
+            <span class="keyword">return</span> decodeFromSource(); <span class="comment">//从网络中获取资源</span>
+        }
+    }
+</code></pre>
+<p>至此，我们看到磁盘缓存和网络请求获取图片资源的代码。查看onLoadFailed()的代码逻辑可知，默认先从磁盘获取，失败则从网络获取。</p>
+<h2 id="BitmapPool缓存逻辑"><a href="#BitmapPool缓存逻辑" class="headerlink" title="BitmapPool缓存逻辑"></a>BitmapPool缓存逻辑</h2><p>以上就是Resource三层缓存的代码，接下来看BitmapPool的缓存实现代码。<br>在decodeFromSource()的代码中，会返回一个类型为BitmapResource的对象。在RecyclerView的例子中，当ImageView被复用时，会在Tag中取出Request,调用request.clear()代码。该方法最终会调用BitmapResource的recycler()方法，代码如下：</p>
+<pre><code class="java"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">recycle</span><span class="params">()</span> </span>{
+       <span class="keyword">if</span> (!bitmapPool.put(bitmap)) {
+           bitmap.recycle();
+       }
+   }
+</code></pre>
+<p>该代码调用bitmapPool.put(bitmap)，bitmapPool的实例是LruBitmapPool代码如下:</p>
+<pre><code class="java"><span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">boolean</span> <span class="title">put</span><span class="params">(Bitmap bitmap)</span> </span>{
+       <span class="keyword">if</span> (bitmap == <span class="keyword">null</span>) {
+           <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException(<span class="string">"Bitmap must not be null"</span>);
+       }
+       <span class="keyword">if</span> (!bitmap.isMutable() || strategy.getSize(bitmap) &gt; maxSize || !allowedConfigs.contains(bitmap.getConfig())) {
+           <span class="keyword">if</span> (Log.isLoggable(TAG, Log.VERBOSE)) {
+               Log.v(TAG, <span class="string">"Reject bitmap from pool"</span>
+                       + <span class="string">", bitmap: "</span> + strategy.logBitmap(bitmap)
+                       + <span class="string">", is mutable: "</span> + bitmap.isMutable()
+                       + <span class="string">", is allowed config: "</span> + allowedConfigs.contains(bitmap.getConfig()));
+           }
+           <span class="keyword">return</span> <span class="keyword">false</span>;
+       }
+
+       <span class="keyword">final</span> <span class="keyword">int</span> size = strategy.getSize(bitmap);
+       strategy.put(bitmap);<span class="comment">//该strategy的实例是Lru算法</span>
+       tracker.add(bitmap); <span class="comment">//log跟踪</span>
+
+       puts++; <span class="comment">//缓存的bitmap数量标记加一</span>
+       currentSize += size;<span class="comment">//缓存bitmap的总大小</span>
+
+       <span class="keyword">if</span> (Log.isLoggable(TAG, Log.VERBOSE)) {
+           Log.v(TAG, <span class="string">"Put bitmap in pool="</span> + strategy.logBitmap(bitmap));
+       }
+       dump(); <span class="comment">//仅用于Log</span>
+
+       evict();  <span class="comment">//判断是否超出指定的内存大小，若超出则移除</span>
+       <span class="keyword">return</span> <span class="keyword">true</span>;
+   }
+</code></pre>
+<p>可以看出，正常情况下调用put方法返回true，证明缓存该Bitmap成功，缓存成功则不调用bitmap.recycler()方法。当需要使用Bitmap时，先从Bitmap中查找是否有符合条件的Bitmap。在RecyclerView中使用Glide的例子中，将大量复用宽高及Bitmap.Config都相等的Bitmap,极大的优化系统内存性能，减少频繁的创建回收Bitmap。</p>
+<h1 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h1><p>Glide的缓存管理至此就分析完了，主要抓住Resource和Bitmap的缓存来讲解。在代码的阅读中还发现了工厂、装饰者等设计模式。Glide的解耦给开发者提供很大的便利性，可根据自身需求设置缓存参数，例如默认Bitmap.Config、BitmapPool缓存大小等。最后，针对Glide的缓存设计，提出几点小建议：</p>
+<ol>
+<li>Glide虽然默认使用的Bitmap.Config是RGB_565,但在进行transform(例如圆角显示图片)时往往默认是ARGB_8888,因为RGB_565没有透明色，此时可重写圆角变换的代码，继续使用RGB_565，同时给canvas设置背景色。</li>
+<li>BitmapPool缓存的Bitmap大小跟Bitmap的分辨率也有关系，在加载图片的过程中，可调用<strong>.override(width, height)</strong>指定图片的宽高，再调整ImageView控件的大小适应布局。</li>
+<li>Resource的一级缓存和Bitmap都是内存缓存，虽然极大的提升了复用，但也会导致部分内存在系统执行GC时无法释放。若内存达到手机性能瓶颈，应在合适的时机调用<strong>Glide.get(this).clearMemory()</strong>释放内存。</li>
+</ol>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2017/02/20/Glide核心设计一：皮皮虾，我们走/" itemprop="url">
                   Glide核心设计一：皮皮虾，我们走
                 </a>
@@ -291,17 +757,18 @@
       
         
           
-            <h1 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h1><blockquote>
+            <p>原文链接：<a href="https://yuanjunli.github.io/2017/02/20/Glide%E6%A0%B8%E5%BF%83%E8%AE%BE%E8%AE%A1%E4%B8%80%EF%BC%9A%E7%9A%AE%E7%9A%AE%E8%99%BE%EF%BC%8C%E6%88%91%E4%BB%AC%E8%B5%B0/" target="_blank" rel="external">Glide核心设计一：皮皮虾，我们走</a></p>
+<h1 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h1><blockquote>
 <p>皮皮虾，又名虾姑，是淡水中的强者。其头部的两个锤节，可以轻易破坏贝类的外壳，身体上的步足可以保证快速移动。这些优秀的品质，使它被表情包盯上。</p>
 </blockquote>
 <p>Glide，作为Android最优秀的图片加载框架之一，能和Activity和Fragment的生命周期绑定，是区别于其它网络框架的核心特征，也是本文分析的重点。</p>
-<p>我们将此特征和皮皮虾表情包做一个类比：<br><img src="/images/glide1_ppx.png" alt="皮皮虾和Glide类比"><br>图片网络请求紧跟Activity、Fragment的生命周期，当页面不可交互时自动停止加载，当回到可交互状态时，继续加载。就像表情包（Activity、Fragment）控制皮皮虾（图片请求）一样。</p>
+<p>我们将此特征和皮皮虾表情包做一个类比：<br><img src="https://yuanjunli.github.io/images/glide1_ppx.png" alt="皮皮虾和Glide类比"><br>图片网络请求紧跟Activity、Fragment的生命周期，当页面不可交互时自动停止加载，当回到可交互状态时，继续加载。就像表情包（Activity、Fragment）控制皮皮虾（图片请求）一样。</p>
 <h1 id="框架设计"><a href="#框架设计" class="headerlink" title="框架设计"></a>框架设计</h1><h2 id="简单使用"><a href="#简单使用" class="headerlink" title="简单使用"></a>简单使用</h2><p><strong>Glide.with(Context).load(String).into(ImageView)</strong>可实现从网络中获取图片并展示到ImageView当中。其中和页面作生命周期绑定的主要入口是<strong>Glide.with(Context)</strong>。按照一般的分析逻辑应该先分析源码，才得出结论，但因一入源码深似海，不利于整体把握，所以先给出结论。Glide.with(Context)返回的是一个<strong>RequestManager</strong>,我们来看<strong>RequestManager</strong>的类的说明注释。</p>
 <blockquote>
 <p>A class for managing and starting requests for Glide. Can use activity, fragment and connectivity lifecycle events to intelligently stop, start, and restart requests. Retrieve either by instantiating a new object, or to take advantage built in Activity and Fragment lifecycle handling, use the static Glide.load methods with your Fragment or Activity.</p>
 </blockquote>
 <p>由此可知，该类就是用于将<strong>请求</strong>和<strong>Activity或Framgent的生命周期</strong>做绑定。</p>
-<h2 id="类图"><a href="#类图" class="headerlink" title="类图"></a>类图</h2><p>将和生命周期相关的类图如下（省略大部分类的变量和方法）：<br><img src="/images/glide1_diagram.png" alt="声明周期绑定类图"></p>
+<h2 id="类图"><a href="#类图" class="headerlink" title="类图"></a>类图</h2><p>将和生命周期相关的类图如下（省略大部分类的变量和方法）：<br><img src="https://yuanjunli.github.io/images/glide1_diagram.png" alt="声明周期绑定类图"></p>
 <h3 id="类的简单介绍"><a href="#类的简单介绍" class="headerlink" title="类的简单介绍"></a>类的简单介绍</h3><ol>
 <li><strong>RequestManagerRetriever</strong>:该类用于创建RequestManager或在Activity、Fragment中找出已创建的RequestManager，RequestManagerRetriever是一个单例。</li>
 <li><strong>RequestManagerFragment</strong>:继承Fragment,不可见，仅用于保存RequestManager，还有一个SupportRequestManagerFragment继承v4包的Fragment,功能类似。</li>
@@ -2788,7 +3255,7 @@ customer.startUp(iphone5Factory);
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">9</span>
+              <span class="site-state-item-count">10</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -2798,7 +3265,7 @@ customer.startUp(iphone5Factory);
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">19</span>
+                <span class="site-state-item-count">24</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

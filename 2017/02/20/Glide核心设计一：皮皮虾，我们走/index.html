@@ -68,7 +68,7 @@
 <link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="Glide,生命周期,工厂模式，代理模式," />
+  <meta name="keywords" content="Glide,生命周期,工厂模式,代理模式," />
 
 
 
@@ -84,31 +84,34 @@
 
 
 
-<meta name="description" content="引言
+<meta name="description" content="原文链接：Glide核心设计一：皮皮虾，我们走
+引言
 皮皮虾，又名虾姑，是淡水中的强者。其头部的两个锤节，可以轻易破坏贝类的外壳，身体上的步足可以保证快速移动。这些优秀的品质，使它被表情包盯上。
 
 Glide，作为Android最优秀的图片加载框架之一，能和Activity和Fragment的生命周期绑定，是区别于其它网络框架的核心特征，也是本文分析的重点。
-我们将此特征和皮皮虾表情包做一个类比：图片网络请求紧跟Activity、Fragmen">
+我们将此特征和皮皮虾表情包做一个类比：">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Glide核心设计一：皮皮虾，我们走">
 <meta property="og:url" content="http://yoursite.com/2017/02/20/Glide核心设计一：皮皮虾，我们走/index.html">
 <meta property="og:site_name" content="NEXTB">
-<meta property="og:description" content="引言
+<meta property="og:description" content="原文链接：Glide核心设计一：皮皮虾，我们走
+引言
 皮皮虾，又名虾姑，是淡水中的强者。其头部的两个锤节，可以轻易破坏贝类的外壳，身体上的步足可以保证快速移动。这些优秀的品质，使它被表情包盯上。
 
 Glide，作为Android最优秀的图片加载框架之一，能和Activity和Fragment的生命周期绑定，是区别于其它网络框架的核心特征，也是本文分析的重点。
-我们将此特征和皮皮虾表情包做一个类比：图片网络请求紧跟Activity、Fragmen">
-<meta property="og:image" content="http://yoursite.com/images/glide1_ppx.png">
-<meta property="og:image" content="http://yoursite.com/images/glide1_diagram.png">
-<meta property="og:updated_time" content="2017-02-21T08:20:38.299Z">
+我们将此特征和皮皮虾表情包做一个类比：">
+<meta property="og:image" content="https://yuanjunli.github.io/images/glide1_ppx.png">
+<meta property="og:image" content="https://yuanjunli.github.io/images/glide1_diagram.png">
+<meta property="og:updated_time" content="2017-02-21T08:25:38.865Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Glide核心设计一：皮皮虾，我们走">
-<meta name="twitter:description" content="引言
+<meta name="twitter:description" content="原文链接：Glide核心设计一：皮皮虾，我们走
+引言
 皮皮虾，又名虾姑，是淡水中的强者。其头部的两个锤节，可以轻易破坏贝类的外壳，身体上的步足可以保证快速移动。这些优秀的品质，使它被表情包盯上。
 
 Glide，作为Android最优秀的图片加载框架之一，能和Activity和Fragment的生命周期绑定，是区别于其它网络框架的核心特征，也是本文分析的重点。
-我们将此特征和皮皮虾表情包做一个类比：图片网络请求紧跟Activity、Fragmen">
-<meta name="twitter:image" content="http://yoursite.com/images/glide1_ppx.png">
+我们将此特征和皮皮虾表情包做一个类比：">
+<meta name="twitter:image" content="https://yuanjunli.github.io/images/glide1_ppx.png">
 
 
 
@@ -303,17 +306,18 @@ Glide，作为Android最优秀的图片加载框架之一，能和Activity和Fra
       
 
       
-        <h1 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h1><blockquote>
+        <p>原文链接：<a href="https://yuanjunli.github.io/2017/02/20/Glide%E6%A0%B8%E5%BF%83%E8%AE%BE%E8%AE%A1%E4%B8%80%EF%BC%9A%E7%9A%AE%E7%9A%AE%E8%99%BE%EF%BC%8C%E6%88%91%E4%BB%AC%E8%B5%B0/" target="_blank" rel="external">Glide核心设计一：皮皮虾，我们走</a></p>
+<h1 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h1><blockquote>
 <p>皮皮虾，又名虾姑，是淡水中的强者。其头部的两个锤节，可以轻易破坏贝类的外壳，身体上的步足可以保证快速移动。这些优秀的品质，使它被表情包盯上。</p>
 </blockquote>
 <p>Glide，作为Android最优秀的图片加载框架之一，能和Activity和Fragment的生命周期绑定，是区别于其它网络框架的核心特征，也是本文分析的重点。</p>
-<p>我们将此特征和皮皮虾表情包做一个类比：<br><img src="/images/glide1_ppx.png" alt="皮皮虾和Glide类比"><br>图片网络请求紧跟Activity、Fragment的生命周期，当页面不可交互时自动停止加载，当回到可交互状态时，继续加载。就像表情包（Activity、Fragment）控制皮皮虾（图片请求）一样。</p>
+<p>我们将此特征和皮皮虾表情包做一个类比：<br><img src="https://yuanjunli.github.io/images/glide1_ppx.png" alt="皮皮虾和Glide类比"><br>图片网络请求紧跟Activity、Fragment的生命周期，当页面不可交互时自动停止加载，当回到可交互状态时，继续加载。就像表情包（Activity、Fragment）控制皮皮虾（图片请求）一样。</p>
 <h1 id="框架设计"><a href="#框架设计" class="headerlink" title="框架设计"></a>框架设计</h1><h2 id="简单使用"><a href="#简单使用" class="headerlink" title="简单使用"></a>简单使用</h2><p><strong>Glide.with(Context).load(String).into(ImageView)</strong>可实现从网络中获取图片并展示到ImageView当中。其中和页面作生命周期绑定的主要入口是<strong>Glide.with(Context)</strong>。按照一般的分析逻辑应该先分析源码，才得出结论，但因一入源码深似海，不利于整体把握，所以先给出结论。Glide.with(Context)返回的是一个<strong>RequestManager</strong>,我们来看<strong>RequestManager</strong>的类的说明注释。</p>
 <blockquote>
 <p>A class for managing and starting requests for Glide. Can use activity, fragment and connectivity lifecycle events to intelligently stop, start, and restart requests. Retrieve either by instantiating a new object, or to take advantage built in Activity and Fragment lifecycle handling, use the static Glide.load methods with your Fragment or Activity.</p>
 </blockquote>
 <p>由此可知，该类就是用于将<strong>请求</strong>和<strong>Activity或Framgent的生命周期</strong>做绑定。</p>
-<h2 id="类图"><a href="#类图" class="headerlink" title="类图"></a>类图</h2><p>将和生命周期相关的类图如下（省略大部分类的变量和方法）：<br><img src="/images/glide1_diagram.png" alt="声明周期绑定类图"></p>
+<h2 id="类图"><a href="#类图" class="headerlink" title="类图"></a>类图</h2><p>将和生命周期相关的类图如下（省略大部分类的变量和方法）：<br><img src="https://yuanjunli.github.io/images/glide1_diagram.png" alt="声明周期绑定类图"></p>
 <h3 id="类的简单介绍"><a href="#类的简单介绍" class="headerlink" title="类的简单介绍"></a>类的简单介绍</h3><ol>
 <li><strong>RequestManagerRetriever</strong>:该类用于创建RequestManager或在Activity、Fragment中找出已创建的RequestManager，RequestManagerRetriever是一个单例。</li>
 <li><strong>RequestManagerFragment</strong>:继承Fragment,不可见，仅用于保存RequestManager，还有一个SupportRequestManagerFragment继承v4包的Fragment,功能类似。</li>
@@ -575,7 +579,9 @@ lifecycle.addListener(connectivityMonitor);
           
             <a href="/tags/生命周期/" rel="tag">#生命周期</a>
           
-            <a href="/tags/工厂模式，代理模式/" rel="tag">#工厂模式，代理模式</a>
+            <a href="/tags/工厂模式/" rel="tag">#工厂模式</a>
+          
+            <a href="/tags/代理模式/" rel="tag">#代理模式</a>
           
         </div>
       
@@ -591,6 +597,10 @@ lifecycle.addListener(connectivityMonitor);
           </div>
 
           <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/02/27/Glide核心设计二-缓存管理/" rel="prev" title="Glide核心设计二:缓存管理">
+                Glide核心设计二:缓存管理 <i class="fa fa-chevron-right"></i>
+              </a>
             
           </div>
         </div>
@@ -662,7 +672,7 @@ lifecycle.addListener(connectivityMonitor);
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">9</span>
+              <span class="site-state-item-count">10</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -672,7 +682,7 @@ lifecycle.addListener(connectivityMonitor);
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">19</span>
+                <span class="site-state-item-count">24</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
